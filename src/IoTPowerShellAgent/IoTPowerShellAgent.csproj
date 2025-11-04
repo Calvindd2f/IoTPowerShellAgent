@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>false</UseWindowsForms>
+    <RootNamespace>IoTPowerShellAgent</RootNamespace>
+    <AssemblyName>IoTPowerShellAgent</AssemblyName>
+    <!-- Version is inherited from Directory.Build.props or can be overridden via MSBuild properties -->
+    <!-- To build with a specific version: dotnet build /p:Version=1.2.3 -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.41.3" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="..\..\config\appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>config\appsettings.json</Link>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TestHelpers\LocalIoTTester.cs" Condition="'$(Configuration)' == 'Release'" />
+  </ItemGroup>
+
+</Project>

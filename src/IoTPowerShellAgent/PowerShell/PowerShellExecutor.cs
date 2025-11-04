@@ -1,0 +1,688 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using System.Reflection;
+using System.Text;
+using System.Globalization;
+using System.Threading.Tasks;
+using System.Threading;
+using IoTPowerShellAgent.Core;
+using IoTPowerShellAgent.Utilities;
+using System.Linq;
+
+namespace IoTPowerShellAgent.PowerShell
+{
+
+
+
+    public class PowerShellExecutor : IPowerShellExecutor
+    {
+        private readonly ILogCallback? _logCallback;
+        private int _verboseLinesProcessed = 0;
+        private int _warningLinesProcessed = 0;
+        private int _errorLinesProcessed = 0;
+        private int _informationLinesProcessed = 0;
+        private int _debugLinesProcessed = 0;
+
+        private int _activityLogCounter = 0;
+        private readonly int _activityLogThreshold = 10000;
+
+        private static SemaphoreSlim? _executionSemaphore;
+        private static readonly object _semaphoreLock = new object();
+
+        public PowerShellExecutor(ILogCallback? logCallback = null)
+        {
+            _logCallback = logCallback;
+            var settings = SettingsService.Instance.Settings;
+
+
+        InitializeSemaphore(settings.MaxConcurrentRunspaces);
+        }
+
+
+
+
+        private static void InitializeSemaphore(int maxConcurrent)
+        {
+            if (_executionSemaphore == null)
+            {
+                lock (_semaphoreLock)
+                {
+                    if (_executionSemaphore == null)
+                    {
+
+                        int semaphoreCount = Math.Max(1, Math.Min(maxConcurrent, 10));
+                        _executionSemaphore = new SemaphoreSlim(semaphoreCount, semaphoreCount);
+                    }
+                }
+            }
+        }
+
+        public void SendLog(string logOutput, LogOutputType logtype)
+        {
+            if (string.IsNullOrEmpty(logOutput))
+                return;
+
+            int count = Interlocked.Increment(ref _activityLogCounter);
+            if (count > _activityLogThreshold)
+            {
+                throw new InvalidOperationException($"Log output exceeded the maximum allowed threshold of {_activityLogThreshold} lines per script execution.");
+            }
+
+            _logCallback?.OnLog(logOutput, logtype);
+        }
+
+        public void Debug_DataAdded(object sender, DataAddedEventArgs e)
+        {
+            if (sender is PSDataCollection<DebugRecord> debugCollection)
+            {
+                var logBuilder = new StringBuilder();
+                for (int i = _debugLinesProcessed; i < debugCollection.Count; i++)
+                {
+                    DebugRecord debugRecord = debugCollection[i];
+                    logBuilder.AppendLine(debugRecord.Message);
+                    ++_debugLinesProcessed;
+                }
+                if (logBuilder.Length > 0)
+                {
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Debug);
+                }
+            }
+        }
+
+        public void Progress_DataAdded(object sender, DataAddedEventArgs e)
+        {
+            if (sender is PSDataCollection<ProgressRecord> progressCollection)
+            {
+                var logBuilder = new StringBuilder();
+                for (int i = 0; i < progressCollection.Count; i++)
+                {
+                    ProgressRecord progressRecord = progressCollection[i];
+                    logBuilder.AppendLine($"{progressRecord.Activity}: {progressRecord.StatusDescription} ({progressRecord.PercentComplete}%)");
+                }
+                if (logBuilder.Length > 0)
+                {
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Progress);
+                }
+            }
+        }
+
+        public void Error_DataAdded(object sender, DataAddedEventArgs e)
+        {
+            if (sender is PSDataCollection<ErrorRecord> errorCollection)
+            {
+                var logBuilder = new StringBuilder();
+                for (int i = _errorLinesProcessed; i < errorCollection.Count; i++)
+                {
+                    ErrorRecord errorRecord = errorCollection[i];
+                    logBuilder.AppendLine(errorRecord.Exception?.Message ?? errorRecord.ToString());
+                    ++_errorLinesProcessed;
+                }
+                if (logBuilder.Length > 0)
+                {
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Error);
+                }
+            }
+        }
+
+        public void Verbose_DataAdded(object sender, DataAddedEventArgs e)
+        {
+            if (sender is PSDataCollection<VerboseRecord> verboseCollection)
+            {
+                var logBuilder = new StringBuilder();
+                for (int i = _verboseLinesProcessed; i < verboseCollection.Count; i++)
+                {
+                    VerboseRecord verboseRecord = verboseCollection[i];
+                    logBuilder.AppendLine(verboseRecord.Message);
+                    ++_verboseLinesProcessed;
+                }
+                if (logBuilder.Length > 0)
+                {
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Verbose);
+                }
+            }
+        }
+
+        public void Warning_DataAdded(object sender, DataAddedEventArgs e)
+        {
+            if (sender is PSDataCollection<WarningRecord> warningCollection)
+            {
+                var logBuilder = new StringBuilder();
+                for (int i = _warningLinesProcessed; i < warningCollection.Count; i++)
+                {
+                    WarningRecord warningRecord = warningCollection[i];
+                    logBuilder.AppendLine(warningRecord.Message);
+                    ++_warningLinesProcessed;
+                }
+                if (logBuilder.Length > 0)
+                {
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Warning);
+                }
+            }
+        }
+
+        public void Information_DataAdded(object sender, DataAddedEventArgs e)
+        {
+            if (sender is PSDataCollection<InformationRecord> infoCollection)
+            {
+                var logBuilder = new StringBuilder();
+                for (int i = _informationLinesProcessed; i < infoCollection.Count; i++)
+                {
+                    InformationRecord infoRecord = infoCollection[i];
+                    logBuilder.AppendLine(infoRecord.MessageData?.ToString() ?? string.Empty);
+                    ++_informationLinesProcessed;
+                }
+                if (logBuilder.Length > 0)
+                {
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Information);
+                }
+            }
+        }
+
+        public void OnOutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (e?.Data != null && e.Data.Length > 0)
+            {
+                SendLog(e.Data, LogOutputType.Information);
+            }
+        }
+
+        public void Host_OnInformation(string information)
+        {
+            string logOutput = information?.Trim() ?? string.Empty;
+            if (logOutput.Length > 0)
+            {
+                SendLog(logOutput, LogOutputType.Information);
+            }
+        }
+
+        public void HandleInformation(string logOutput)
+        {
+            if (string.IsNullOrEmpty(logOutput))
+                return;
+            SendLog(logOutput, LogOutputType.Information);
+        }
+
+        public void BindEvents(System.Management.Automation.PowerShell ps, DefaultHost host)
+        {
+            ps.Streams.Debug.DataAdded += Debug_DataAdded;
+            ps.Streams.Error.DataAdded += Error_DataAdded;
+            ps.Streams.Progress.DataAdded += Progress_DataAdded;
+
+
+            try
+            {
+                PropertyInfo property = ps.Streams.GetType().GetProperty("Information");
+                if (property != null)
+                {
+                    object? target = property.GetValue(ps.Streams);
+                    if (target != null)
+                    {
+                        EventInfo? eventInfo = target.GetType().GetEvent("DataAdded");
+                        if (eventInfo != null)
+                        {
+                            MethodInfo method = GetType().GetMethod("Information_DataAdded", BindingFlags.Instance | BindingFlags.Public);
+                            if (method != null)
+                            {
+                                Delegate? handler = Delegate.CreateDelegate(eventInfo.EventHandlerType, this, method);
+                                if (handler != null)
+                                {
+                                    eventInfo.AddEventHandler(target, handler);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+
+                host.OnInformation += Host_OnInformation;
+            }
+
+            ps.Streams.Verbose.DataAdded += Verbose_DataAdded;
+            ps.Streams.Warning.DataAdded += Warning_DataAdded;
+        }
+
+
+
+
+        public async Task<PowerShellExecutionResult> ExecutePowerShellAsync(string script, bool isInlinePowershell, CancellationToken cancellationToken = default)
+        {
+
+            if (_executionSemaphore == null)
+            {
+                var settings = SettingsService.Instance.Settings;
+                InitializeSemaphore(settings.MaxConcurrentRunspaces);
+            }
+
+
+            await _executionSemaphore!.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+
+
+                return await Task.Run(() => ExecutePowerShellInternal(script, isInlinePowershell, cancellationToken), cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+
+                _executionSemaphore.Release();
+            }
+        }
+
+
+
+
+
+        public PowerShellExecutionResult ExecutePowerShell(string script, bool isInlinePowershell)
+        {
+
+
+            return ExecutePowerShellAsync(script, isInlinePowershell, CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+
+
+
+        private PowerShellExecutionResult ExecutePowerShellInternal(string script, bool isInlinePowershell, CancellationToken cancellationToken)
+        {
+            PowerShellExecutionResult result = new PowerShellExecutionResult();
+            Runspace? runspace = null;
+            System.Management.Automation.PowerShell? powerShell = null;
+            PSObject? psobject2 = null;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(script))
+                {
+                    throw new ArgumentException("Script cannot be null or empty", nameof(script));
+                }
+
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                SettingsService settingsService = SettingsService.Instance;
+                DefaultHost defaultHost = new DefaultHost(CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
+
+
+                InitialSessionState initialSessionState = InitialSessionState.CreateDefault2();
+
+                runspace = RunspaceFactory.CreateRunspace(defaultHost, initialSessionState);
+                runspace.Open();
+
+                powerShell = System.Management.Automation.PowerShell.Create();
+                powerShell.Runspace = runspace;
+                this.BindEvents(powerShell, defaultHost);
+
+
+
+                try
+                {
+
+
+                    using (var preloadPs = System.Management.Automation.PowerShell.Create())
+                    {
+                        preloadPs.Runspace = runspace;
+
+
+
+                        preloadPs.AddScript(@"
+                            $ErrorActionPreference = 'SilentlyContinue';
+                            # Try to pre-load core modules using their full paths
+                            # This bypasses the auto-import mechanism that can trigger PSSnapIn errors
+                            $psHome = $PSHOME;
+                            $managementPath = Join-Path $psHome 'Modules\Microsoft.PowerShell.Management\Microsoft.PowerShell.Management.psd1';
+                            $utilityPath = Join-Path $psHome 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1';
+
+                            # Load modules if they exist and aren't already loaded
+                            if (Test-Path $managementPath) {
+                                if (-not (Get-Module -Name Microsoft.PowerShell.Management)) {
+                                    try {
+                                        Import-Module $managementPath -Force -SkipEditionCheck -ErrorAction Stop;
+                                    } catch {
+                                        # If import fails, try loading the .psm1 file directly
+                                        $psm1Path = Join-Path (Split-Path $managementPath -Parent) 'Microsoft.PowerShell.Management.psm1';
+                                        if (Test-Path $psm1Path) {
+                                            Import-Module $psm1Path -Force -SkipEditionCheck -ErrorAction SilentlyContinue;
+                                        }
+                                    }
+                                }
+                            }
+                            if (Test-Path $utilityPath) {
+                                if (-not (Get-Module -Name Microsoft.PowerShell.Utility)) {
+                                    try {
+                                        Import-Module $utilityPath -Force -SkipEditionCheck -ErrorAction Stop;
+                                    } catch {
+                                        # If import fails, try loading the .psm1 file directly
+                                        $psm1Path = Join-Path (Split-Path $utilityPath -Parent) 'Microsoft.PowerShell.Utility.psm1';
+                                        if (Test-Path $psm1Path) {
+                                            Import-Module $psm1Path -Force -SkipEditionCheck -ErrorAction SilentlyContinue;
+                                        }
+                                    }
+                                }
+                            }
+                        ", false);
+
+                        preloadPs.Invoke();
+                        var preloadErrors = preloadPs.Streams.Error;
+
+
+
+                        foreach (var error in preloadErrors)
+                        {
+                            if (error.Exception != null)
+                            {
+                                var errorMsg = error.Exception.Message;
+
+                                if (!errorMsg.Contains("PSSnapIn") && !errorMsg.Contains("Could not load type"))
+                                {
+                                    SendLog($"Module preload warning: {errorMsg}", LogOutputType.Warning);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    SendLog($"Module preload exception (non-fatal): {ex.Message}", LogOutputType.Warning);
+                }
+
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                // Reset ErrorActionPreference to default after preload (preload sets it to SilentlyContinue
+                // on the shared runspace, which would suppress errors from the user's script)
+                powerShell.AddScript("$ErrorActionPreference = 'Continue'", false);
+                powerShell.Invoke();
+                powerShell.Commands.Clear();
+
+                powerShell.AddScript(script, false);
+
+                PSInvocationSettings psinvocationSettings = new PSInvocationSettings();
+                psinvocationSettings.Host = defaultHost;
+
+
+
+
+                Collection<PSObject> output = powerShell.Invoke();
+
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+
+                if (output.Count == 0)
+                {
+                    SendLog($"PowerShell output collection is empty (Count=0). Output may be going to host streams.", LogOutputType.Debug);
+                }
+                else
+                {
+                    SendLog($"PowerShell output collection has {output.Count} object(s)", LogOutputType.Debug);
+                }
+
+
+                if (powerShell.Streams.Error.Count > 0)
+                {
+                    var errorDetailsList = new List<PowerShellErrorDetails>();
+                    StringBuilder errorBuilder = new StringBuilder();
+
+                    foreach (ErrorRecord error in powerShell.Streams.Error)
+                    {
+
+                        var errorDetails = PowerShellErrorDetails.FromErrorRecord(error);
+                        errorDetailsList.Add(errorDetails);
+
+
+                        string errorMsg = error.Exception?.Message ?? error.ToString();
+
+
+                        if (errorMsg.Contains("is not recognized") ||
+                            errorMsg.Contains("was not found") ||
+                            errorMsg.Contains("could not be loaded"))
+                        {
+                            errorBuilder.AppendLine($"Command Error: {errorMsg}");
+                        }
+                        else
+                        {
+                            errorBuilder.AppendLine(errorMsg);
+                        }
+
+
+                        var innerException = error.Exception?.InnerException;
+                        int innerDepth = 0;
+                        while (innerException != null && innerDepth < 5)
+                        {
+                            errorBuilder.AppendLine($"  Inner Exception: {innerException.Message}");
+                            innerException = innerException.InnerException;
+                            innerDepth++;
+                        }
+                    }
+
+                    result.ErrorMessage = errorBuilder.ToString();
+                    result.ErrorDetails = errorDetailsList;
+                    result.Success = false;
+                }
+
+
+
+
+                if (output.Count == 0 && !isInlinePowershell)
+                {
+
+
+                    if (!string.IsNullOrEmpty(result.ErrorMessage))
+                    {
+
+                        result.Success = false;
+                    }
+                    else
+                    {
+
+                        result.Success = true;
+                        result.Output = string.Empty;
+                    }
+                }
+
+
+                object? outputToSerialize = null;
+                if (output.Count > 1)
+                {
+
+                    var outputArray = new object[output.Count];
+                    for (int i = 0; i < output.Count; i++)
+                    {
+                        outputArray[i] = output[i].BaseObject ?? output[i];
+                    }
+                    outputToSerialize = outputArray;
+                    result.RawOutput = outputArray;
+
+
+                    SendLog($"Serializing array of {output.Count} objects, first object type: {outputArray[0]?.GetType().FullName ?? "null"}", LogOutputType.Debug);
+                }
+                else if (output.Count == 1)
+                {
+
+                    psobject2 = output[0];
+                    result.RawOutput = psobject2;
+                    outputToSerialize = psobject2.BaseObject ?? psobject2;
+
+
+                    if (outputToSerialize != null)
+                    {
+                        SendLog($"Serializing single object of type: {outputToSerialize.GetType().FullName}, IsComplex: {IsComplexObject(outputToSerialize)}", LogOutputType.Debug);
+                    }
+                }
+
+                if (outputToSerialize != null)
+                {
+                    try
+                    {
+
+
+                        if (IsComplexObject(outputToSerialize))
+                        {
+
+                            var context = new ConvertToJsonContext(
+                                maxDepth: 1024,
+                                enumsAsStrings: true,
+                                compressOutput: true);
+                            string jsonOutput = JsonObject.ConvertToJson(outputToSerialize, context);
+                            result.Output = !string.IsNullOrEmpty(jsonOutput) ? jsonOutput : string.Empty;
+                        }
+                        else
+                        {
+
+                            string stringOutput = outputToSerialize.ToString();
+                            result.Output = !string.IsNullOrEmpty(stringOutput) ? stringOutput : string.Empty;
+                        }
+                        result.Success = true;
+                    }
+                    catch (Exception jsonEx)
+                    {
+
+                        SendLog($"JSON serialization failed, using ToString(): {jsonEx.Message}", LogOutputType.Warning);
+                        try
+                        {
+                            result.Output = outputToSerialize.ToString() ?? string.Empty;
+                            result.Success = true;
+                        }
+                        catch
+                        {
+                            result.Output = string.Empty;
+                            result.Success = true;
+                        }
+                    }
+                }
+                else if (string.IsNullOrEmpty(result.ErrorMessage))
+                {
+                    result.Success = true;
+                    result.Output = string.Empty;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                result.Success = false;
+                result.ErrorMessage = "Script execution was cancelled.";
+                SendLog("Script execution was cancelled.", LogOutputType.Warning);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Exception = ex;
+                result.ErrorMessage = ex.ToString();
+
+
+                result.ErrorDetails = new List<PowerShellErrorDetails>
+                {
+                    PowerShellErrorDetails.FromException(ex)
+                };
+
+                SendLog(ex.ToString(), LogOutputType.Error);
+            }
+            finally
+            {
+                if (runspace != null)
+                {
+                    runspace.Close();
+                    runspace.Dispose();
+                }
+                if (powerShell != null)
+                {
+                    powerShell.Dispose();
+                }
+                if (psobject2 is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+
+            return result;
+        }
+
+
+
+
+
+
+        private static bool IsComplexObject(object obj)
+        {
+            if (obj == null)
+                return false;
+
+            Type type = obj.GetType();
+
+
+            if (type.IsPrimitive ||
+                type == typeof(string) ||
+                type == typeof(DateTime) ||
+                type == typeof(DateTimeOffset) ||
+                type == typeof(TimeSpan) ||
+                type == typeof(Guid) ||
+                type == typeof(decimal) ||
+                type.IsEnum)
+            {
+                return false;
+            }
+
+
+            if (obj is IEnumerable && !(obj is string))
+            {
+                return true;
+            }
+
+
+            if (type.IsClass && type != typeof(object))
+            {
+
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                if (properties.Length > 0)
+                {
+                    return true;
+                }
+            }
+
+
+            if (obj is PSObject psObj)
+            {
+                var properties = psObj.Properties;
+                if (properties != null)
+                {
+
+                    foreach (var prop in properties)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public void Dispose()
+        {
+
+            if (_logCallback is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+            GC.SuppressFinalize(this);
+
+
+        }
+    }
+
+
+
+
+    public interface ILogCallback
+{
+    void OnLog(string message, LogOutputType logType);
+}
+}

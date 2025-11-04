@@ -1,0 +1,593 @@
+2026-08-31T20:10:41.0358268Z Current runner version: '2.337.0'
+2026-08-31T20:10:41.0409172Z ##[group]Runner Image Provisioner
+2026-08-31T20:10:41.0410826Z Hosted Compute Agent
+2026-08-31T20:10:41.0411635Z Version: 20260819.586
+2026-08-31T20:10:41.0412573Z Commit: 3cc4a88dfa507ef76119ad1bb3eccc6378bb2b76
+2026-08-31T20:10:41.0413643Z Build Date: 2026-08-18T23:20:18Z
+2026-08-31T20:10:41.0414579Z Worker ID: {9c3a7177-927b-4705-a1e2-4ed925c4a192}
+2026-08-31T20:10:41.0415646Z Azure Region: eastus
+2026-08-31T20:10:41.0416488Z ##[endgroup]
+2026-08-31T20:10:41.0418751Z ##[group]Operating System
+2026-08-31T20:10:41.0419776Z Microsoft Windows Server 2025
+2026-08-31T20:10:41.0420741Z 10.0.26100
+2026-08-31T20:10:41.0421641Z Datacenter
+2026-08-31T20:10:41.0422375Z ##[endgroup]
+2026-08-31T20:10:41.0423177Z ##[group]Runner Image
+2026-08-31T20:10:41.0424033Z Image: windows-2025-vs2026
+2026-08-31T20:10:41.0424805Z Version: 20260824.214.3
+2026-08-31T20:10:41.0427170Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20260824.214/images/windows/Windows2025-VS2026-Readme.md
+2026-08-31T20:10:41.0429753Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20260824.214
+2026-08-31T20:10:41.0431623Z ##[endgroup]
+2026-08-31T20:10:41.0433288Z ##[group]GITHUB_TOKEN Permissions
+2026-08-31T20:10:41.0436059Z Contents: read
+2026-08-31T20:10:41.0436858Z Metadata: read
+2026-08-31T20:10:41.0437760Z Packages: read
+2026-08-31T20:10:41.0438543Z ##[endgroup]
+2026-08-31T20:10:41.0441370Z Secret source: Actions
+2026-08-31T20:10:41.0442851Z Prepare workflow directory
+2026-08-31T20:10:41.0927298Z Prepare all required actions
+2026-08-31T20:10:41.0999073Z Getting action download info
+2026-08-31T20:10:41.2779512Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-08-31T20:10:41.4632711Z Download action repository 'actions/setup-dotnet@v4' (SHA:67a3573c9a986a3f9c594539f4ab511d57bb3ce9)
+2026-08-31T20:10:41.7550902Z Download action repository 'EnricoMi/publish-unit-test-result-action@v2' (SHA:d0a4676d0e0b938bc201470d88276b7c74c712b3)
+2026-08-31T20:10:42.3971785Z Getting action download info
+2026-08-31T20:10:42.4623353Z Download action repository 'actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae' (SHA:27d5ce7f107fe9357f9df03efb73ab90386fccae)
+2026-08-31T20:10:42.7005393Z Complete job name: build
+2026-08-31T20:10:42.9058060Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-31T20:10:42.9068395Z ##[group]Run actions/checkout@v4
+2026-08-31T20:10:42.9069152Z with:
+2026-08-31T20:10:42.9069597Z   fetch-depth: 0
+2026-08-31T20:10:42.9070115Z   repository: Calvindd2f/IoTPowerShellAgent
+2026-08-31T20:10:42.9090019Z   token: ***
+2026-08-31T20:10:42.9090819Z   ssh-strict: true
+2026-08-31T20:10:42.9091368Z   ssh-user: git
+2026-08-31T20:10:42.9091826Z   persist-credentials: true
+2026-08-31T20:10:42.9092321Z   clean: true
+2026-08-31T20:10:42.9092778Z   sparse-checkout-cone-mode: true
+2026-08-31T20:10:42.9093535Z   fetch-tags: false
+2026-08-31T20:10:42.9094015Z   show-progress: true
+2026-08-31T20:10:42.9094489Z   lfs: false
+2026-08-31T20:10:42.9094967Z   submodules: false
+2026-08-31T20:10:42.9095427Z   set-safe-directory: true
+2026-08-31T20:10:42.9095953Z   allow-unsafe-pr-checkout: false
+2026-08-31T20:10:42.9096957Z ##[endgroup]
+2026-08-31T20:10:43.7468743Z Syncing repository: Calvindd2f/IoTPowerShellAgent
+2026-08-31T20:10:43.7472590Z ##[group]Getting Git version info
+2026-08-31T20:10:43.7474490Z Working directory is 'D:\a\IoTPowerShellAgent\IoTPowerShellAgent'
+2026-08-31T20:10:43.7478358Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-08-31T20:10:43.8251213Z git version 2.55.0.windows.5
+2026-08-31T20:10:43.8254927Z ##[endgroup]
+2026-08-31T20:10:43.8261882Z Temporarily overriding HOME='D:\a\_temp\6c907d6b-7fc5-4081-865c-fca66cd57a93' before making global git config changes
+2026-08-31T20:10:43.8267556Z Adding repository directory to the temporary git global config as a safe directory
+2026-08-31T20:10:43.8271283Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\IoTPowerShellAgent\IoTPowerShellAgent
+2026-08-31T20:10:43.8509269Z Deleting the contents of 'D:\a\IoTPowerShellAgent\IoTPowerShellAgent'
+2026-08-31T20:10:43.8514166Z ##[group]Initializing the repository
+2026-08-31T20:10:43.8517492Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\IoTPowerShellAgent\IoTPowerShellAgent
+2026-08-31T20:10:43.9484215Z Initialized empty Git repository in D:/a/IoTPowerShellAgent/IoTPowerShellAgent/.git/
+2026-08-31T20:10:43.9540245Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/Calvindd2f/IoTPowerShellAgent
+2026-08-31T20:10:44.0412025Z ##[endgroup]
+2026-08-31T20:10:44.0414563Z ##[group]Disabling automatic garbage collection
+2026-08-31T20:10:44.0424206Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-08-31T20:10:44.1071595Z ##[endgroup]
+2026-08-31T20:10:44.1088695Z ##[group]Setting up auth
+2026-08-31T20:10:44.1129384Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-08-31T20:10:44.7336237Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-08-31T20:10:45.7439134Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-08-31T20:10:45.7822596Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-08-31T20:10:46.4109512Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-31T20:10:46.4442867Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-08-31T20:10:47.0316775Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-08-31T20:10:47.0656495Z ##[endgroup]
+2026-08-31T20:10:47.0657434Z ##[group]Fetching the repository
+2026-08-31T20:10:47.0673809Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +8d2d8ca7641ee34bc01f4d5ad6bbeb91166866a1:refs/remotes/pull/14/merge
+2026-08-31T20:10:48.3626563Z From https://github.com/Calvindd2f/IoTPowerShellAgent
+2026-08-31T20:10:48.3638298Z  * [new branch]      cppp                                     -> origin/cppp
+2026-08-31T20:10:48.3649313Z  * [new branch]      dev                                      -> origin/dev
+2026-08-31T20:10:48.3651757Z  * [new branch]      main                                     -> origin/main
+2026-08-31T20:10:48.3652843Z  * [new tag]         preview                                  -> preview
+2026-08-31T20:10:48.3653850Z  * [new ref]         8d2d8ca7641ee34bc01f4d5ad6bbeb91166866a1 -> pull/14/merge
+2026-08-31T20:10:48.3730913Z ##[endgroup]
+2026-08-31T20:10:48.3751003Z ##[group]Determining the checkout info
+2026-08-31T20:10:48.3754367Z ##[endgroup]
+2026-08-31T20:10:48.3755505Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-08-31T20:10:48.4292033Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-08-31T20:10:48.4662078Z ##[group]Checking out the ref
+2026-08-31T20:10:48.4752067Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/remotes/pull/14/merge
+2026-08-31T20:10:48.5850337Z Note: switching to 'refs/remotes/pull/14/merge'.
+2026-08-31T20:10:48.5850922Z 
+2026-08-31T20:10:48.5856300Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-08-31T20:10:48.5857390Z changes and commit them, and you can discard any commits you make in this
+2026-08-31T20:10:48.5858265Z state without impacting any branches by switching back to a branch.
+2026-08-31T20:10:48.5858807Z 
+2026-08-31T20:10:48.5859201Z If you want to create a new branch to retain commits you create, you may
+2026-08-31T20:10:48.5861598Z do so (now or later) by using -c with the switch command. Example:
+2026-08-31T20:10:48.5862059Z 
+2026-08-31T20:10:48.5862240Z   git switch -c <new-branch-name>
+2026-08-31T20:10:48.5862518Z 
+2026-08-31T20:10:48.5862660Z Or undo this operation with:
+2026-08-31T20:10:48.5863018Z 
+2026-08-31T20:10:48.5863140Z   git switch -
+2026-08-31T20:10:48.5863287Z 
+2026-08-31T20:10:48.5863494Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-08-31T20:10:48.5863819Z 
+2026-08-31T20:10:48.5864159Z HEAD is now at 8d2d8ca Merge 3a4356e2c8ffe1d01de44566bfbbb1b372a32133 into 7bbb16614f9fb300500a110b76c5dcea5a913ae4
+2026-08-31T20:10:48.5961470Z ##[endgroup]
+2026-08-31T20:10:48.6363206Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-08-31T20:10:48.6661205Z 8d2d8ca7641ee34bc01f4d5ad6bbeb91166866a1
+2026-08-31T20:10:48.7144469Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-31T20:10:48.7146326Z ##[group]Run actions/setup-dotnet@v4
+2026-08-31T20:10:48.7146576Z with:
+2026-08-31T20:10:48.7146783Z   global-json-file: global.json
+2026-08-31T20:10:48.7147027Z   cache: false
+2026-08-31T20:10:48.7147210Z ##[endgroup]
+2026-08-31T20:10:48.9052274Z (node:6408) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-08-31T20:10:48.9054002Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-08-31T20:10:49.0417423Z [command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command & 'D:\a\_actions\actions\setup-dotnet\v4\externals\install-dotnet.ps1' -SkipNonVersionedFiles -Runtime dotnet -Channel LTS
+2026-08-31T20:10:50.3727345Z dotnet-install: .NET Core Runtime with version '10.0.11' is already installed.
+2026-08-31T20:10:50.5382630Z [command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -Sta -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command & 'D:\a\_actions\actions\setup-dotnet\v4\externals\install-dotnet.ps1' -SkipNonVersionedFiles -Version 8.0.0
+2026-08-31T20:10:54.6817191Z dotnet-install: Downloading from "primary" link has failed with error:
+2026-08-31T20:10:54.6818505Z Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+2026-08-31T20:10:54.6819475Z StatusCode: 404
+2026-08-31T20:10:54.6820837Z Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+2026-08-31T20:10:54.6822691Z Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+2026-08-31T20:10:54.6829876Z StatusCode: 404
+2026-08-31T20:10:54.6831357Z Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404 Downloading from "primary" link has failed with error:
+2026-08-31T20:10:54.6832992Z Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+2026-08-31T20:10:54.6833687Z StatusCode: 404
+2026-08-31T20:10:54.6834941Z Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+2026-08-31T20:10:54.6836819Z Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+2026-08-31T20:10:54.6837467Z StatusCode: 404
+2026-08-31T20:10:54.6838239Z Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404
+2026-08-31T20:10:54.6839462Z dotnet-install: Downloading from "primary" link has failed with error:
+2026-08-31T20:10:54.6840304Z Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+2026-08-31T20:10:54.6840751Z StatusCode: 404
+2026-08-31T20:10:54.6841455Z Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+2026-08-31T20:10:54.6842326Z Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+2026-08-31T20:10:54.6842722Z StatusCode: 404
+2026-08-31T20:10:54.6843399Z Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404 Downloading from "primary" link has failed with error:
+2026-08-31T20:10:54.6844210Z Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+2026-08-31T20:10:54.6844537Z StatusCode: 404
+2026-08-31T20:10:54.6847714Z Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+2026-08-31T20:10:54.6848624Z Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+2026-08-31T20:10:54.6848970Z StatusCode: 404
+2026-08-31T20:10:54.6849469Z Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404
+2026-08-31T20:10:54.6850117Z dotnet-install: Downloading from "primary" link has failed with error:
+2026-08-31T20:10:54.6850643Z Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+2026-08-31T20:10:54.6851064Z StatusCode: 404
+2026-08-31T20:10:54.6851748Z Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+2026-08-31T20:10:54.6852675Z Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+2026-08-31T20:10:54.6853073Z StatusCode: 404
+2026-08-31T20:10:54.6853739Z Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404 Downloading from "primary" link has failed with error:
+2026-08-31T20:10:54.6854658Z Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+2026-08-31T20:10:54.6855103Z StatusCode: 404
+2026-08-31T20:10:54.6855703Z Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+2026-08-31T20:10:54.6856439Z Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+2026-08-31T20:10:54.6856764Z StatusCode: 404
+2026-08-31T20:10:54.6857195Z Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404
+2026-08-31T20:10:54.6857784Z dotnet-install: Downloading from "primary" link has failed with error:
+2026-08-31T20:10:54.6858269Z Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+2026-08-31T20:10:54.6858656Z StatusCode: 404
+2026-08-31T20:10:54.6859316Z Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+2026-08-31T20:10:54.6860161Z Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+2026-08-31T20:10:54.6860539Z StatusCode: 404
+2026-08-31T20:10:54.6861353Z Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404 Downloading from "primary" link has failed with error:
+2026-08-31T20:10:54.6862148Z Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+2026-08-31T20:10:54.6862463Z StatusCode: 404
+2026-08-31T20:10:54.6863059Z Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+2026-08-31T20:10:54.6863789Z Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+2026-08-31T20:10:54.6864099Z StatusCode: 404
+2026-08-31T20:10:54.6864540Z Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404
+2026-08-31T20:10:54.7948436Z Exception: D:\a\_actions\actions\setup-dotnet\v4\externals\install-dotnet.ps1:1350
+2026-08-31T20:10:54.7949707Z Line |
+2026-08-31T20:10:54.7950884Z 1350 |      throw "Could not find `"$assetName`" with version = $($DownloadLi …
+2026-08-31T20:10:54.7952332Z      |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-08-31T20:10:54.7955901Z      | Could not find ".NET Core SDK" with version = 8.0.0 Refer to: https://aka.ms/dotnet-os-lifecycle for information
+2026-08-31T20:10:54.7957636Z      | on .NET support
+2026-08-31T20:10:54.8822957Z ##[error]Failed to install dotnet, exit code: 1. dotnet-install: Downloading from "primary" link has failed with error:
+Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+StatusCode: 404
+Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+StatusCode: 404
+Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404 Downloading from "primary" link has failed with error:
+Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+StatusCode: 404
+Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+StatusCode: 404
+Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404
+dotnet-install: Downloading from "primary" link has failed with error:
+Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+StatusCode: 404
+Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+StatusCode: 404
+Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404 Downloading from "primary" link has failed with error:
+Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+StatusCode: 404
+Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+StatusCode: 404
+Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404
+dotnet-install: Downloading from "primary" link has failed with error:
+Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+StatusCode: 404
+Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+StatusCode: 404
+Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404 Downloading from "primary" link has failed with error:
+Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+StatusCode: 404
+Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+Uri: https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+StatusCode: 404
+Error: Unable to download https://ci.dot.net/public/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404
+dotnet-install: Downloading from "primary" link has failed with error:
+Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip
+StatusCode: 404
+Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-sdk-8.0.0-win-x64.zip. Returned HTTP status code: 404 Downloading from "legacy" link has failed with error:
+Uri: https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip
+StatusCode: 404
+Error: Unable to download https://builds.dotnet.microsoft.com/dotnet/Sdk/8.0.0/dotnet-dev-win-x64.8.0.0.zip. Returned HTTP status code: 404 Downloading from "primary" l
+2026-08-31T20:10:54.9355161Z ##[group]Run EnricoMi/publish-unit-test-result-action/composite@v2
+2026-08-31T20:10:54.9355615Z with:
+2026-08-31T20:10:54.9355826Z   files: **/*.trx,**/PesterResults.xml
+2026-08-31T20:10:54.9358990Z   github_token: ***
+2026-08-31T20:10:54.9359226Z   github_retries: 10
+2026-08-31T20:10:54.9359427Z   ssl_verify: true
+2026-08-31T20:10:54.9359624Z   check_name: Test Results
+2026-08-31T20:10:54.9359836Z   comment_mode: always
+2026-08-31T20:10:54.9360038Z   fail_on: test failures
+2026-08-31T20:10:54.9360237Z   action_fail: false
+2026-08-31T20:10:54.9360442Z   action_fail_on_inconclusive: false
+2026-08-31T20:10:54.9360679Z   time_unit: seconds
+2026-08-31T20:10:54.9360875Z   report_suite_logs: none
+2026-08-31T20:10:54.9361078Z   ignore_runs: false
+2026-08-31T20:10:54.9361250Z   check_run: true
+2026-08-31T20:10:54.9361428Z   job_summary: true
+2026-08-31T20:10:54.9361621Z   compare_to_earlier_commit: true
+2026-08-31T20:10:54.9361854Z   pull_request_build: merge
+2026-08-31T20:10:54.9362147Z   check_run_annotations: all tests, skipped tests
+2026-08-31T20:10:54.9362449Z   seconds_between_github_reads: 0.25
+2026-08-31T20:10:54.9362695Z   seconds_between_github_writes: 2.0
+2026-08-31T20:10:54.9363118Z   json_thousands_separator:  
+2026-08-31T20:10:54.9363356Z   json_suite_details: false
+2026-08-31T20:10:54.9363572Z   json_test_case_results: false
+2026-08-31T20:10:54.9363792Z   search_pull_requests: false
+2026-08-31T20:10:54.9364001Z ##[endgroup]
+2026-08-31T20:10:54.9431918Z ##[start-action display=Deprecation warning;id=__EnricoMi_publish-unit-test-result-action.__run]
+2026-08-31T20:10:54.9602476Z ##[group]Run # Print deprecation warning
+2026-08-31T20:10:54.9602843Z # Print deprecation warning
+2026-08-31T20:10:54.9603854Z echo "::warning::Running this action via 'uses: EnricoMi/publish-unit-test-result-action/composite@v2 is deprecated! For details, see: https://github.com/EnricoMi/publish-unit-test-result-action/tree/v2#running-as-a-composite-action"
+2026-08-31T20:10:54.9625852Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-08-31T20:10:54.9626268Z ##[endgroup]
+2026-08-31T20:10:55.1497171Z ##[warning]Running this action via 'uses: EnricoMi/publish-unit-test-result-action/composite@v2 is deprecated! For details, see: https://github.com/EnricoMi/publish-unit-test-result-action/tree/v2#running-as-a-composite-action
+2026-08-31T20:10:55.1574763Z ##[end-action id=__EnricoMi_publish-unit-test-result-action.__run;outcome=success;conclusion=success;duration_ms=214]
+2026-08-31T20:10:55.1578962Z ##[start-action display=Check for Python3;id=__EnricoMi_publish-unit-test-result-action.python]
+2026-08-31T20:10:55.1762703Z ##[group]Run # Check for Python3
+2026-08-31T20:10:55.1763188Z # Check for Python3
+2026-08-31T20:10:55.1763591Z echo '::group::Check for Python3'
+2026-08-31T20:10:55.1764014Z 
+2026-08-31T20:10:55.1764494Z # we check version here just to execute `python3` with an argument
+2026-08-31T20:10:55.1765409Z # on Windows, there is a `python3.exe` that is a proxy to trigger installation from app store
+2026-08-31T20:10:55.1766454Z # command `which python3` finds that, but `python3 -V` does not return the version on stdout
+2026-08-31T20:10:55.1767489Z if ! which python3 || [[ "$(python3 -V)" != *"python 3."* && "$(python3 -V)" != *"Python 3."* ]]
+2026-08-31T20:10:55.1768177Z then
+2026-08-31T20:10:55.1768723Z   if ! which python || [[ "$(python -V)" != *"python 3."* && "$(python -V)" != *"Python 3."* ]]
+2026-08-31T20:10:55.1769371Z   then
+2026-08-31T20:10:55.1770362Z     echo "::error::No python3 interpreter found. Please setup python before running this action. You could use https://github.com/actions/setup-python."
+2026-08-31T20:10:55.1771447Z     exit 1
+2026-08-31T20:10:55.1771754Z   fi
+2026-08-31T20:10:55.1772024Z 
+2026-08-31T20:10:55.1774785Z   PYTHON_BIN="$(python -c 'import sys; print(sys.executable)')"
+2026-08-31T20:10:55.1775760Z else
+2026-08-31T20:10:55.1776233Z   PYTHON_BIN="$(python3 -c 'import sys; print(sys.executable)')"
+2026-08-31T20:10:55.1776800Z fi
+2026-08-31T20:10:55.1777095Z 
+2026-08-31T20:10:55.1777444Z echo "Python that creates venv: $PYTHON_BIN"
+2026-08-31T20:10:55.1777996Z echo "PYTHON_BIN=$PYTHON_BIN" >> "$GITHUB_ENV"
+2026-08-31T20:10:55.1778477Z 
+2026-08-31T20:10:55.1779173Z PYTHON_VERSION="$("$PYTHON_BIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+2026-08-31T20:10:55.1780074Z if [[ "$PYTHON_VERSION" == "3.7" ]]; then
+2026-08-31T20:10:55.1780625Z   echo "DEPENDENCIES_VERSION=3.7" >> "$GITHUB_ENV"
+2026-08-31T20:10:55.1781175Z elif [[ "$PYTHON_VERSION" == "3.8" ]]; then
+2026-08-31T20:10:55.1781705Z   echo "DEPENDENCIES_VERSION=3.8" >> "$GITHUB_ENV"
+2026-08-31T20:10:55.1782247Z elif [[ "$PYTHON_VERSION" == "3.9" ]]; then
+2026-08-31T20:10:55.1782770Z   echo "DEPENDENCIES_VERSION=3.9" >> "$GITHUB_ENV"
+2026-08-31T20:10:55.1783242Z else
+2026-08-31T20:10:55.1783645Z   echo "DEPENDENCIES_VERSION=post-3.9" >> "$GITHUB_ENV"
+2026-08-31T20:10:55.1784155Z fi
+2026-08-31T20:10:55.1784545Z echo "version=$PYTHON_VERSION" >> "$GITHUB_OUTPUT"
+2026-08-31T20:10:55.1785027Z 
+2026-08-31T20:10:55.1785307Z echo '::endgroup::'
+2026-08-31T20:10:55.1803577Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-08-31T20:10:55.1804224Z ##[endgroup]
+2026-08-31T20:10:55.2184226Z ##[group]Check for Python3
+2026-08-31T20:10:55.2635378Z /c/hostedtoolcache/windows/Python/3.12.10/x64/python3
+2026-08-31T20:10:56.1990223Z Python that creates venv: C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.exe
+2026-08-31T20:10:56.2480884Z ##[endgroup]
+2026-08-31T20:10:56.2568819Z ##[end-action id=__EnricoMi_publish-unit-test-result-action.python;outcome=success;conclusion=success;duration_ms=1098]
+2026-08-31T20:10:56.2572894Z ##[start-action display=Restore PIP packages cache;id=__EnricoMi_publish-unit-test-result-action.cache]
+2026-08-31T20:10:56.2799837Z ##[group]Run actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae
+2026-08-31T20:10:56.2800468Z with:
+2026-08-31T20:10:56.2800794Z   path: .enricomi-publish-action-pip
+2026-08-31T20:10:56.2801543Z   key: enricomi-publish-action-pip-Windows-X64-3.12-68522748e1f6be59932663d60e323a39
+2026-08-31T20:10:56.2802318Z   enableCrossOsArchive: false
+2026-08-31T20:10:56.2802705Z   fail-on-cache-miss: false
+2026-08-31T20:10:56.2803072Z   lookup-only: false
+2026-08-31T20:10:56.2803375Z env:
+2026-08-31T20:10:56.2803820Z   PYTHON_BIN: C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.exe
+2026-08-31T20:10:56.2804427Z   DEPENDENCIES_VERSION: post-3.9
+2026-08-31T20:10:56.2804802Z ##[endgroup]
+2026-08-31T20:10:56.9312788Z Cache hit for: enricomi-publish-action-pip-Windows-X64-3.12-68522748e1f6be59932663d60e323a39
+2026-08-31T20:10:56.9663075Z Received 11533209 of 11533209 (100.0%), 56.4 MBs/sec
+2026-08-31T20:10:56.9664066Z Cache Size: ~11 MB (11533209 B)
+2026-08-31T20:10:56.9724197Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/fef5bf4c-a2ed-4e56-8007-7a13dd58afe2/cache.tzst -P -C D:/a/IoTPowerShellAgent/IoTPowerShellAgent --force-local --use-compress-program "zstd -d"
+2026-08-31T20:10:57.1873081Z Cache restored successfully
+2026-08-31T20:10:57.2005297Z Cache restored from key: enricomi-publish-action-pip-Windows-X64-3.12-68522748e1f6be59932663d60e323a39
+2026-08-31T20:10:57.2130592Z ##[end-action id=__EnricoMi_publish-unit-test-result-action.cache;outcome=success;conclusion=success;duration_ms=955]
+2026-08-31T20:10:57.2134270Z ##[start-action display=Create virtualenv;id=__EnricoMi_publish-unit-test-result-action.venv]
+2026-08-31T20:10:57.2323433Z ##[group]Run # Create virtualenv
+2026-08-31T20:10:57.2324624Z # Create virtualenv
+2026-08-31T20:10:57.2324895Z echo '::group::Create virtualenv'
+2026-08-31T20:10:57.2325162Z 
+2026-08-31T20:10:57.2325345Z PIP_OPTIONS=""
+2026-08-31T20:10:57.2325595Z # set extra pip option for Windows
+2026-08-31T20:10:57.2325972Z if [[ "$RUNNER_OS" == Windows* ]]; then PIP_OPTIONS="--user"; fi
+2026-08-31T20:10:57.2326317Z 
+2026-08-31T20:10:57.2326541Z echo "Python that creates venv: $PYTHON_BIN"
+2026-08-31T20:10:57.2326825Z 
+2026-08-31T20:10:57.2327025Z echo "Creating virtual environment"
+2026-08-31T20:10:57.2327605Z if ! "$PYTHON_BIN" -m virtualenv .enricomi-publish-action-venv && ! "$PYTHON_BIN" -m venv .enricomi-publish-action-venv
+2026-08-31T20:10:57.2328126Z then
+2026-08-31T20:10:57.2328441Z   echo "Looks like there is neither virtualenv nor venv package installed"
+2026-08-31T20:10:57.2329119Z   if ! "$PYTHON_BIN" -m pip --cache-dir .enricomi-publish-action-pip install $PIP_OPTIONS virtualenv && [ -n "$PIP_OPTIONS" ]
+2026-08-31T20:10:57.2329657Z   then
+2026-08-31T20:10:57.2330062Z     echo "Installing virtualenv package with PIP options '$PIP_OPTIONS' failed, now trying without"
+2026-08-31T20:10:57.2330684Z     if ! "$PYTHON_BIN" -m pip --cache-dir .enricomi-publish-action-pip install virtualenv
+2026-08-31T20:10:57.2331088Z     then
+2026-08-31T20:10:57.2331347Z       echo "::error::Installing virtualenv package failed"
+2026-08-31T20:10:57.2331658Z       exit 1
+2026-08-31T20:10:57.2331850Z     fi
+2026-08-31T20:10:57.2332038Z   fi
+2026-08-31T20:10:57.2332201Z 
+2026-08-31T20:10:57.2348250Z   if ! "$PYTHON_BIN" -m virtualenv .enricomi-publish-action-venv
+2026-08-31T20:10:57.2348870Z   then
+2026-08-31T20:10:57.2349348Z     echo "::error::Cannot create venv after installing virtualenv package"
+2026-08-31T20:10:57.2349943Z     exit 1
+2026-08-31T20:10:57.2350248Z   fi
+2026-08-31T20:10:57.2350512Z fi
+2026-08-31T20:10:57.2350774Z 
+2026-08-31T20:10:57.2351123Z echo "Finding Python interpreter in venv"
+2026-08-31T20:10:57.2351860Z case "$RUNNER_OS" in
+2026-08-31T20:10:57.2352233Z   Linux*|macOS*)
+2026-08-31T20:10:57.2352729Z     PYTHON_VENV=".enricomi-publish-action-venv/bin/python";;
+2026-08-31T20:10:57.2353322Z   Windows*)
+2026-08-31T20:10:57.2353822Z     PYTHON_VENV=".enricomi-publish-action-venv\\Scripts\\python";;
+2026-08-31T20:10:57.2354410Z esac
+2026-08-31T20:10:57.2355157Z PYTHON_VENV="$("$PYTHON_VENV" -c 'import sys; print(sys.executable)')"
+2026-08-31T20:10:57.2355782Z echo "Python in venv: $PYTHON_VENV"
+2026-08-31T20:10:57.2356262Z echo "PYTHON_VENV=$PYTHON_VENV" >> "$GITHUB_ENV"
+2026-08-31T20:10:57.2356720Z 
+2026-08-31T20:10:57.2356989Z echo '::endgroup::'
+2026-08-31T20:10:57.2372555Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-08-31T20:10:57.2372963Z env:
+2026-08-31T20:10:57.2373260Z   PYTHON_BIN: C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.exe
+2026-08-31T20:10:57.2373644Z   DEPENDENCIES_VERSION: post-3.9
+2026-08-31T20:10:57.2373880Z ##[endgroup]
+2026-08-31T20:10:57.2741859Z ##[group]Create virtualenv
+2026-08-31T20:10:57.2742629Z Python that creates venv: C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.exe
+2026-08-31T20:10:57.2743569Z Creating virtual environment
+2026-08-31T20:10:57.3743678Z C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.exe: No module named virtualenv
+2026-08-31T20:11:03.4136436Z Finding Python interpreter in venv
+2026-08-31T20:11:03.4849421Z Python in venv: D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Scripts\python.exe
+2026-08-31T20:11:03.4853974Z ##[endgroup]
+2026-08-31T20:11:03.4909675Z ##[end-action id=__EnricoMi_publish-unit-test-result-action.venv;outcome=success;conclusion=success;duration_ms=6277]
+2026-08-31T20:11:03.4913455Z ##[start-action display=Install Python dependencies;id=__EnricoMi_publish-unit-test-result-action.__run_2]
+2026-08-31T20:11:03.5086153Z ##[group]Run # Install Python dependencies
+2026-08-31T20:11:03.5086683Z # Install Python dependencies
+2026-08-31T20:11:03.5087153Z echo '::group::Install Python dependencies'
+2026-08-31T20:11:03.5087851Z "$PYTHON_VENV" -m pip --cache-dir .enricomi-publish-action-pip install -r "$GITHUB_ACTION_PATH/../python/requirements-$DEPENDENCIES_VERSION.txt"
+2026-08-31T20:11:03.5088626Z echo '::endgroup::'
+2026-08-31T20:11:03.5101580Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-08-31T20:11:03.5101988Z env:
+2026-08-31T20:11:03.5102282Z   PYTHON_BIN: C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.exe
+2026-08-31T20:11:03.5102669Z   DEPENDENCIES_VERSION: post-3.9
+2026-08-31T20:11:03.5103163Z   PYTHON_VENV: D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Scripts\python.exe
+2026-08-31T20:11:03.5103653Z ##[endgroup]
+2026-08-31T20:11:03.5486478Z ##[group]Install Python dependencies
+2026-08-31T20:11:05.2172192Z Collecting humanize==4.15.0 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 1))
+2026-08-31T20:11:05.2194554Z   Using cached humanize-4.15.0-py3-none-any.whl.metadata (7.8 kB)
+2026-08-31T20:11:05.2376646Z Collecting junitparser==5.0.0 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 2))
+2026-08-31T20:11:05.2398268Z   Using cached junitparser-5.0.0-py3-none-any.whl.metadata (9.6 kB)
+2026-08-31T20:11:05.4343757Z Collecting lxml==6.1.1 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 3))
+2026-08-31T20:11:05.4367266Z   Using cached lxml-6.1.1-cp312-cp312-win_amd64.whl.metadata (3.6 kB)
+2026-08-31T20:11:05.4909214Z Collecting psutil==7.2.2 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 4))
+2026-08-31T20:11:05.4930618Z   Using cached psutil-7.2.2-cp37-abi3-win_amd64.whl.metadata (22 kB)
+2026-08-31T20:11:05.5159665Z Collecting PyGithub==2.9.1 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 5))
+2026-08-31T20:11:05.5181065Z   Using cached pygithub-2.9.1-py3-none-any.whl.metadata (3.9 kB)
+2026-08-31T20:11:05.5353644Z Collecting PyJWT==2.13.0 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 6))
+2026-08-31T20:11:05.5374226Z   Using cached pyjwt-2.13.0-py3-none-any.whl.metadata (3.4 kB)
+2026-08-31T20:11:05.5553727Z Collecting typing_extensions==4.15.0 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 7))
+2026-08-31T20:11:05.5572363Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-08-31T20:11:05.5767364Z Collecting PyNaCl==1.6.2 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 8))
+2026-08-31T20:11:05.5789185Z   Using cached pynacl-1.6.2-cp38-abi3-win_amd64.whl.metadata (10 kB)
+2026-08-31T20:11:05.6844871Z Collecting cffi==2.0.0 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 9))
+2026-08-31T20:11:05.6869761Z   Using cached cffi-2.0.0-cp312-cp312-win_amd64.whl.metadata (2.6 kB)
+2026-08-31T20:11:05.7521333Z Collecting pycparser==3.0 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 10))
+2026-08-31T20:11:05.7540969Z   Using cached pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+2026-08-31T20:11:05.7784150Z Collecting requests==2.34.2 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 11))
+2026-08-31T20:11:05.7806129Z   Using cached requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+2026-08-31T20:11:05.8028174Z Collecting certifi==2026.5.20 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 12))
+2026-08-31T20:11:05.8076088Z   Using cached certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+2026-08-31T20:11:05.9019787Z Collecting charset-normalizer==3.4.7 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 13))
+2026-08-31T20:11:05.9042512Z   Using cached charset_normalizer-3.4.7-cp312-cp312-win_amd64.whl.metadata (41 kB)
+2026-08-31T20:11:05.9273085Z Collecting idna==3.17 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 14))
+2026-08-31T20:11:05.9294646Z   Using cached idna-3.17-py3-none-any.whl.metadata (6.4 kB)
+2026-08-31T20:11:05.9525756Z Collecting urllib3==2.7.0 (from -r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 15))
+2026-08-31T20:11:05.9547158Z   Using cached urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+2026-08-31T20:11:06.1618155Z Collecting cryptography>=3.4.0 (from pyjwt[crypto]>=2.4.0->PyGithub==2.9.1->-r D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/requirements-post-3.9.txt (line 5))
+2026-08-31T20:11:06.1643424Z   Using cached cryptography-50.0.1-cp311-abi3-win_amd64.whl.metadata (4.3 kB)
+2026-08-31T20:11:06.1799492Z Using cached humanize-4.15.0-py3-none-any.whl (132 kB)
+2026-08-31T20:11:06.1800474Z Using cached junitparser-5.0.0-py3-none-any.whl (14 kB)
+2026-08-31T20:11:06.1802583Z Using cached lxml-6.1.1-cp312-cp312-win_amd64.whl (4.0 MB)
+2026-08-31T20:11:06.2011819Z Using cached psutil-7.2.2-cp37-abi3-win_amd64.whl (137 kB)
+2026-08-31T20:11:06.2045421Z Using cached pygithub-2.9.1-py3-none-any.whl (449 kB)
+2026-08-31T20:11:06.2129791Z Using cached pyjwt-2.13.0-py3-none-any.whl (31 kB)
+2026-08-31T20:11:06.2141135Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-08-31T20:11:06.2142391Z Using cached pynacl-1.6.2-cp38-abi3-win_amd64.whl (239 kB)
+2026-08-31T20:11:06.2143197Z Using cached cffi-2.0.0-cp312-cp312-win_amd64.whl (183 kB)
+2026-08-31T20:11:06.2143924Z Using cached pycparser-3.0-py3-none-any.whl (48 kB)
+2026-08-31T20:11:06.2150236Z Using cached requests-2.34.2-py3-none-any.whl (73 kB)
+2026-08-31T20:11:06.2151150Z Using cached certifi-2026.5.20-py3-none-any.whl (134 kB)
+2026-08-31T20:11:06.2152048Z Using cached charset_normalizer-3.4.7-cp312-cp312-win_amd64.whl (159 kB)
+2026-08-31T20:11:06.2152871Z Using cached idna-3.17-py3-none-any.whl (65 kB)
+2026-08-31T20:11:06.2153553Z Using cached urllib3-2.7.0-py3-none-any.whl (131 kB)
+2026-08-31T20:11:06.2164715Z Using cached cryptography-50.0.1-cp311-abi3-win_amd64.whl (3.8 MB)
+2026-08-31T20:11:06.3080010Z Installing collected packages: urllib3, typing_extensions, PyJWT, pycparser, psutil, lxml, junitparser, idna, humanize, charset-normalizer, certifi, requests, cffi, PyNaCl, cryptography, PyGithub
+2026-08-31T20:11:08.0769984Z Successfully installed PyGithub-2.9.1 PyJWT-2.13.0 PyNaCl-1.6.2 certifi-2026.5.20 cffi-2.0.0 charset-normalizer-3.4.7 cryptography-50.0.1 humanize-4.15.0 idna-3.17 junitparser-5.0.0 lxml-6.1.1 psutil-7.2.2 pycparser-3.0 requests-2.34.2 typing_extensions-4.15.0 urllib3-2.7.0
+2026-08-31T20:11:08.2880272Z 
+2026-08-31T20:11:08.2882171Z [notice] A new release of pip is available: 25.0.1 -> 26.2.1
+2026-08-31T20:11:08.2883592Z [notice] To update, run: D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Scripts\python.exe -m pip install --upgrade pip
+2026-08-31T20:11:08.4104894Z ##[endgroup]
+2026-08-31T20:11:08.4155556Z ##[end-action id=__EnricoMi_publish-unit-test-result-action.__run_2;outcome=success;conclusion=success;duration_ms=4923]
+2026-08-31T20:11:08.4174069Z ##[start-action display=Publish Test Results;id=__EnricoMi_publish-unit-test-result-action.test-results]
+2026-08-31T20:11:08.4311095Z ##[group]Run # Publish Test Results
+2026-08-31T20:11:08.4311748Z # Publish Test Results
+2026-08-31T20:11:08.4312022Z echo '::group::Publish Test Results'
+2026-08-31T20:11:08.4312425Z "$PYTHON_VENV" "$GITHUB_ACTION_PATH/../python/publish_test_results.py"
+2026-08-31T20:11:08.4312811Z echo '::endgroup::'
+2026-08-31T20:11:08.4326377Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2026-08-31T20:11:08.4326773Z env:
+2026-08-31T20:11:08.4327059Z   PYTHON_BIN: C:\hostedtoolcache\windows\Python\3.12.10\x64\python3.exe
+2026-08-31T20:11:08.4327427Z   DEPENDENCIES_VERSION: post-3.9
+2026-08-31T20:11:08.4327919Z   PYTHON_VENV: D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Scripts\python.exe
+2026-08-31T20:11:08.4331261Z   GITHUB_TOKEN: ***
+2026-08-31T20:11:08.4331485Z   GITHUB_RETRIES: 10
+2026-08-31T20:11:08.4331975Z   SSL_VERIFY: true
+2026-08-31T20:11:08.4332165Z   COMMIT: 
+2026-08-31T20:11:08.4332343Z   CHECK_NAME: Test Results
+2026-08-31T20:11:08.4332567Z   COMMENT_TITLE: 
+2026-08-31T20:11:08.4332762Z   COMMENT_MODE: always
+2026-08-31T20:11:08.4332963Z   FAIL_ON: test failures
+2026-08-31T20:11:08.4333165Z   ACTION_FAIL: false
+2026-08-31T20:11:08.4333367Z   ACTION_FAIL_ON_INCONCLUSIVE: false
+2026-08-31T20:11:08.4333640Z   FILES: **/*.trx,**/PesterResults.xml
+2026-08-31T20:11:08.4333881Z   JUNIT_FILES: 
+2026-08-31T20:11:08.4334057Z   NUNIT_FILES: 
+2026-08-31T20:11:08.4334227Z   XUNIT_FILES: 
+2026-08-31T20:11:08.4334402Z   TRX_FILES: 
+2026-08-31T20:11:08.4334578Z   TIME_UNIT: seconds
+2026-08-31T20:11:08.4334770Z   TEST_FILE_PREFIX: 
+2026-08-31T20:11:08.4334971Z   REPORT_INDIVIDUAL_RUNS: 
+2026-08-31T20:11:08.4335197Z   REPORT_SUITE_LOGS: none
+2026-08-31T20:11:08.4335427Z   DEDUPLICATE_CLASSES_BY_FILE_NAME: 
+2026-08-31T20:11:08.4335668Z   LARGE_FILES: 
+2026-08-31T20:11:08.4335856Z   IGNORE_RUNS: false
+2026-08-31T20:11:08.4336053Z   COMPARE_TO_EARLIER_COMMIT: true
+2026-08-31T20:11:08.4336303Z   PULL_REQUEST_BUILD: merge
+2026-08-31T20:11:08.4336727Z   EVENT_FILE: 
+2026-08-31T20:11:08.4336967Z   EVENT_NAME: 
+2026-08-31T20:11:08.4337261Z   TEST_CHANGES_LIMIT: 
+2026-08-31T20:11:08.4337522Z   CHECK_RUN_ANNOTATIONS: all tests, skipped tests
+2026-08-31T20:11:08.4337815Z   CHECK_RUN_ANNOTATIONS_BRANCH: 
+2026-08-31T20:11:08.4338059Z   SECONDS_BETWEEN_GITHUB_READS: 0.25
+2026-08-31T20:11:08.4338301Z   SECONDS_BETWEEN_GITHUB_WRITES: 2.0
+2026-08-31T20:11:08.4338554Z   SECONDARY_RATE_LIMIT_WAIT_SECONDS: 
+2026-08-31T20:11:08.4338786Z   JSON_FILE: 
+2026-08-31T20:11:08.4338976Z   JSON_THOUSANDS_SEPARATOR:  
+2026-08-31T20:11:08.4339205Z   JSON_SUITE_DETAILS: false
+2026-08-31T20:11:08.4339435Z   JSON_TEST_CASE_RESULTS: false
+2026-08-31T20:11:08.4339660Z   CHECK_RUN: true
+2026-08-31T20:11:08.4339856Z   JOB_SUMMARY: true
+2026-08-31T20:11:08.4340053Z   SEARCH_PULL_REQUESTS: false
+2026-08-31T20:11:08.4340267Z   ROOT_LOG_LEVEL: 
+2026-08-31T20:11:08.4340449Z   LOG_LEVEL: 
+2026-08-31T20:11:08.4340626Z ##[endgroup]
+2026-08-31T20:11:08.4714925Z ##[group]Publish Test Results
+2026-08-31T20:11:09.5511102Z 2026-08-31 20:11:09 +0000 - publish -  INFO - Available memory to read files: 5.7 GiB
+2026-08-31T20:11:09.5533681Z 2026-08-31 20:11:09 +0000 - publish - WARNING - Could not find any files for **/*.trx,**/PesterResults.xml
+2026-08-31T20:11:09.5548138Z 2026-08-31 20:11:09 +0000 - publish -  INFO - Finished reading 0 files in 0 seconds
+2026-08-31T20:11:10.0289027Z 2026-08-31 20:11:10 +0000 - publish -  INFO - Publishing neutral results for commit 3a4356e2c8ffe1d01de44566bfbbb1b372a32133
+2026-08-31T20:11:10.9047457Z Request GET /repos/Calvindd2f/IoTPowerShellAgent/commits/e25baa8039842337ccae618315610b32b42bcbd4/check-runs?per_page=100 failed with 403: Forbidden
+2026-08-31T20:11:10.9050359Z 2026-08-31 20:11:10 +0000 - github.GithubRetry -  INFO - Request GET /repos/Calvindd2f/IoTPowerShellAgent/commits/e25baa8039842337ccae618315610b32b42bcbd4/check-runs?per_page=100 failed with 403: Forbidden
+2026-08-31T20:11:10.9057259Z Traceback (most recent call last):
+2026-08-31T20:11:10.9058844Z ##[warning]Could not find any files for **/*.trx,**/PesterResults.xml
+2026-08-31T20:11:10.9060424Z   File "D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/publish_test_results.py", line 556, in <module>
+2026-08-31T20:11:10.9061297Z 
+2026-08-31T20:11:10.9061758Z     main(settings, gha)
+2026-08-31T20:11:10.9062791Z   File "D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\composite/../python/publish_test_results.py", line 274, in main
+2026-08-31T20:11:10.9064177Z     Publisher(settings, gh, gha).publish(stats, results.case_results, conclusion)
+2026-08-31T20:11:10.9065464Z   File "D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\python\publish\publisher.py", line 223, in publish
+2026-08-31T20:11:10.9066633Z     data = self.get_publish_data(stats, cases, conclusion)
+2026-08-31T20:11:10.9067304Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9068368Z   File "D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\python\publish\publisher.py", line 421, in get_publish_data
+2026-08-31T20:11:10.9069560Z     before_check_run = self.get_check_run(before_commit_sha)
+2026-08-31T20:11:10.9070316Z                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9071396Z   File "D:\a\_actions\EnricoMi\publish-unit-test-result-action\v2\python\publish\publisher.py", line 353, in get_check_run
+2026-08-31T20:11:10.9072879Z     return self.get_check_run_from_list(list(runs))
+2026-08-31T20:11:10.9073550Z                                         ^^^^^^^^^^
+2026-08-31T20:11:10.9074816Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\PaginatedList.py", line 102, in __iter__
+2026-08-31T20:11:10.9076091Z     newElements = self._grow()
+2026-08-31T20:11:10.9076650Z                   ^^^^^^^^^^^^
+2026-08-31T20:11:10.9077778Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\PaginatedList.py", line 113, in _grow
+2026-08-31T20:11:10.9079350Z     newElements = self._fetchNextPage()
+2026-08-31T20:11:10.9079895Z                   ^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9081122Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\PaginatedList.py", line 371, in _fetchNextPage
+2026-08-31T20:11:10.9082568Z     headers, data = self.__requester.requestJsonAndCheck(
+2026-08-31T20:11:10.9093197Z                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9094662Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\Requester.py", line 629, in requestJsonAndCheck
+2026-08-31T20:11:10.9096101Z     *self.requestJson(
+2026-08-31T20:11:10.9096560Z      ^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9097683Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\Requester.py", line 1073, in requestJson
+2026-08-31T20:11:10.9099044Z     status, responseHeaders, output = self.__requestEncode(
+2026-08-31T20:11:10.9099730Z                                       ^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9100996Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\Requester.py", line 1212, in __requestEncode
+2026-08-31T20:11:10.9102380Z     status, responseHeaders, output = self.__requestRaw(
+2026-08-31T20:11:10.9103004Z                                       ^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9104274Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\Requester.py", line 1250, in __requestRaw
+2026-08-31T20:11:10.9105659Z     response = cnx.getresponse()
+2026-08-31T20:11:10.9106401Z                ^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9107597Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\Requester.py", line 206, in getresponse
+2026-08-31T20:11:10.9108886Z     r = verb(
+2026-08-31T20:11:10.9109310Z         ^^^^^
+2026-08-31T20:11:10.9110351Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\requests\sessions.py", line 671, in get
+2026-08-31T20:11:10.9112245Z     return self.request("GET", url, params=params, **kwargs)
+2026-08-31T20:11:10.9112932Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9114126Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\requests\sessions.py", line 651, in request
+2026-08-31T20:11:10.9115420Z     resp = self.send(prep, **send_kwargs)
+2026-08-31T20:11:10.9116062Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9117240Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\requests\sessions.py", line 784, in send
+2026-08-31T20:11:10.9118577Z     r = adapter.send(request, **kwargs)
+2026-08-31T20:11:10.9119156Z         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9120331Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\requests\adapters.py", line 696, in send
+2026-08-31T20:11:10.9121575Z     resp = conn.urlopen(
+2026-08-31T20:11:10.9122050Z            ^^^^^^^^^^^^^
+2026-08-31T20:11:10.9123186Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\urllib3\connectionpool.py", line 945, in urlopen
+2026-08-31T20:11:10.9124663Z     retries = retries.increment(method, url, response=response, _pool=self)
+2026-08-31T20:11:10.9125402Z               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9126545Z   File "D:\a\IoTPowerShellAgent\IoTPowerShellAgent\.enricomi-publish-action-venv\Lib\site-packages\github\GithubRetry.py", line 190, in increment
+2026-08-31T20:11:10.9127925Z     raise Requester.createException(response.status, response.headers, content)  # type: ignore
+2026-08-31T20:11:10.9129165Z     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-08-31T20:11:10.9131721Z github.GithubException.GithubException: Resource not accessible by integration: 403 {"message": "Resource not accessible by integration", "documentation_url": "https://docs.github.com/rest/checks/runs#list-check-runs-for-a-git-reference", "status": "403"}
+2026-08-31T20:11:10.9649872Z ##[error]Process completed with exit code 1.
+2026-08-31T20:11:10.9656771Z ##[end-action id=__EnricoMi_publish-unit-test-result-action.test-results;outcome=failure;conclusion=failure;duration_ms=2548]
+2026-08-31T20:11:10.9659554Z ##[start-action display=Save PIP packages cache;id=__EnricoMi_publish-unit-test-result-action.__actions_cache]
+2026-08-31T20:11:10.9680786Z ##[end-action id=__EnricoMi_publish-unit-test-result-action.__actions_cache;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-08-31T20:11:10.9920352Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-31T20:11:10.9921832Z Post job cleanup.
+2026-08-31T20:11:11.2088492Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-08-31T20:11:11.2392053Z git version 2.55.0.windows.5
+2026-08-31T20:11:11.2454614Z Temporarily overriding HOME='D:\a\_temp\1ce936ab-a4e2-4f4b-b0a5-9a28180278bf' before making global git config changes
+2026-08-31T20:11:11.2455866Z Adding repository directory to the temporary git global config as a safe directory
+2026-08-31T20:11:11.2466516Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\IoTPowerShellAgent\IoTPowerShellAgent
+2026-08-31T20:11:11.2793672Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-08-31T20:11:11.3124953Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-08-31T20:11:11.9777281Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-08-31T20:11:12.0061774Z http.https://github.com/.extraheader
+2026-08-31T20:11:12.0113315Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-08-31T20:11:12.0449574Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-08-31T20:11:12.6887436Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-31T20:11:12.7378818Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-08-31T20:11:13.3284791Z Cleaning up orphan processes
+2026-08-31T20:11:13.3484684Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-dotnet@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

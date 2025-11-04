@@ -1,0 +1,48 @@
+name: Build & Test (Dev)
+
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "v*.*.*"
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for semantic versioning
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Determine version from Git tag
+        id: version
+        run: |
+          $tag = git describe --tags --abbrev=0 2>$null
+          if ($tag) {
+            $version = $tag -replace '^v', ''
+            if ($version -notmatch '^\d+\.\d+') {
+              $version = "0.0.0-$version"
+            }
+            Write-Host "Version from tag: $version"
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No tag found, using default version"
+            echo "version=1.0.0" >> $env:GITHUB_OUTPUT
+          }
+        shell: pwsh
+
+      - name: Restore dependencies
+        run: dotnet restore src\IoTPowerShellAgent\IoTPowerShellAgent.csproj
+
+      - name: Build
+        run: dotnet build src\IoTPowerShellAgent\IoTPowerShellAgent.csproj --configuration Debug /p:Version=${{ steps.version.outputs.version }}
