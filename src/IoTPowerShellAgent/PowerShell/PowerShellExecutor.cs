@@ -238,43 +238,89 @@ namespace IoTPowerShellAgent.PowerShell
             bool isActivityNode = settingsService.GetIsActivityNode();
 
                         DefaultHost defaultHost = new DefaultHost(CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
-                // Create session state with default commands but avoid snap-ins
-                // CreateDefault() includes snap-ins, CreateDefault2() is minimal
-                // We'll create a custom one that includes modules but not snap-ins
+                // In PowerShell 7, CreateDefault() may try to load snap-ins which can fail
+                // Use CreateDefault2() which creates a minimal session state without snap-ins
                 InitialSessionState initialSessionState = InitialSessionState.CreateDefault2();
-                
-                // Import core PowerShell modules to ensure standard cmdlets work
-                // This avoids the PSSnapIn loading issues while still providing functionality
-                try
-                {
-                    initialSessionState.ImportPSModule(new[] { "Microsoft.PowerShell.Utility", "Microsoft.PowerShell.Management" });
-                }
-                catch
-                {
-                    // If explicit import fails, continue with minimal state
-                    // PowerShell will auto-import modules on first use
-                }
-                
+
                 runspace = RunspaceFactory.CreateRunspace(defaultHost, initialSessionState);
                 runspace.Open();
                 
                 powerShell = System.Management.Automation.PowerShell.Create();
                 powerShell.Runspace = runspace;
                 this.BindEvents(powerShell, defaultHost);
-                
-                // Pre-import core modules to avoid runtime loading issues
-                // This must be done via Invoke() after runspace is created
+
+                // Pre-load core PowerShell modules to avoid PSSnapIn compatibility issues
+                // We need to load modules before the script runs to catch any loading errors early
                 try
                 {
-                    var importPs = System.Management.Automation.PowerShell.Create();
-                    importPs.Runspace = runspace;
-                    importPs.AddScript("$null = Import-Module Microsoft.PowerShell.Utility -ErrorAction SilentlyContinue; $null = Import-Module Microsoft.PowerShell.Management -ErrorAction SilentlyContinue", false);
-                    importPs.Invoke();
-                    importPs.Dispose();
+                    // Use using statement to ensure PowerShell instance is always disposed
+                    // even if SendLog() throws an exception during error processing
+                    using (var preloadPs = System.Management.Automation.PowerShell.Create())
+                    {
+                        preloadPs.Runspace = runspace;
+
+                        // Create a script that pre-loads commonly used modules
+                        // This uses direct module path access to bypass auto-loading issues
+                        preloadPs.AddScript(@"
+                            $ErrorActionPreference = 'SilentlyContinue';
+                            # Try to pre-load core modules using their full paths
+                            # This bypasses the auto-import mechanism that can trigger PSSnapIn errors
+                            $psHome = $PSHOME;
+                            $managementPath = Join-Path $psHome 'Modules\Microsoft.PowerShell.Management\Microsoft.PowerShell.Management.psd1';
+                            $utilityPath = Join-Path $psHome 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1';
+                            
+                            # Load modules if they exist and aren't already loaded
+                            if (Test-Path $managementPath) {
+                                if (-not (Get-Module -Name Microsoft.PowerShell.Management)) {
+                                    try {
+                                        Import-Module $managementPath -Force -SkipEditionCheck -ErrorAction Stop;
+                                    } catch {
+                                        # If import fails, try loading the .psm1 file directly
+                                        $psm1Path = Join-Path (Split-Path $managementPath -Parent) 'Microsoft.PowerShell.Management.psm1';
+                                        if (Test-Path $psm1Path) {
+                                            Import-Module $psm1Path -Force -SkipEditionCheck -ErrorAction SilentlyContinue;
+                                        }
+                                    }
+                                }
+                            }
+                            if (Test-Path $utilityPath) {
+                                if (-not (Get-Module -Name Microsoft.PowerShell.Utility)) {
+                                    try {
+                                        Import-Module $utilityPath -Force -SkipEditionCheck -ErrorAction Stop;
+                                    } catch {
+                                        # If import fails, try loading the .psm1 file directly
+                                        $psm1Path = Join-Path (Split-Path $utilityPath -Parent) 'Microsoft.PowerShell.Utility.psm1';
+                                        if (Test-Path $psm1Path) {
+                                            Import-Module $psm1Path -Force -SkipEditionCheck -ErrorAction SilentlyContinue;
+                                        }
+                                    }
+                                }
+                            }
+                        ", false);
+
+                        preloadPs.Invoke();
+                        var preloadErrors = preloadPs.Streams.Error;
+
+                        // Log any errors but don't fail - modules might still auto-load on demand
+                        // Note: SendLog() could throw, but using statement ensures preloadPs is disposed
+                        foreach (var error in preloadErrors)
+                        {
+                            if (error.Exception != null)
+                            {
+                                var errorMsg = error.Exception.Message;
+                                // Suppress PSSnapIn errors as they're expected in some configurations
+                                if (!errorMsg.Contains("PSSnapIn") && !errorMsg.Contains("Could not load type"))
+                                {
+                                    this.SendLog($"Module preload warning: {errorMsg}", LogOutputType.Warning);
+                                }
+                            }
+                        }
+                    } // preloadPs.Dispose() called here automatically
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Continue even if pre-import fails - modules may auto-load on demand
+                    // Non-fatal - continue execution as modules may still work
+                    this.SendLog($"Module preload exception (non-fatal): {ex.Message}", LogOutputType.Warning);
                 }
                 
                 powerShell.AddScript(script, false);
@@ -284,24 +330,46 @@ namespace IoTPowerShellAgent.PowerShell
 
                 Collection<PSObject> output = powerShell.Invoke();
 
-                // Check for errors
+                // Check for errors - collect all error messages
                 if (powerShell.Streams.Error.Count > 0)
                 {
                     StringBuilder errorBuilder = new StringBuilder();
                     foreach (ErrorRecord error in powerShell.Streams.Error)
                     {
-                        errorBuilder.AppendLine(error.Exception?.Message ?? error.ToString());
+                        string errorMsg = error.Exception?.Message ?? error.ToString();
+                        // Check if this is a command not found error (module not loaded)
+                        if (errorMsg.Contains("is not recognized") ||
+                            errorMsg.Contains("was not found") ||
+                            errorMsg.Contains("could not be loaded"))
+                        {
+                            errorBuilder.AppendLine($"Command Error: {errorMsg}");
+                        }
+                        else
+                        {
+                            errorBuilder.AppendLine(errorMsg);
+                        }
                     }
                     result.ErrorMessage = errorBuilder.ToString();
                     result.Success = false;
                 }
 
                 // Result validation and processing
+                // Note: Some commands like Format-Table output to host, not pipeline
+                // So empty output is not always an error
                 if (output.Count == 0 && (!isActivityNode || !isInlinePowershell))
                 {
-                    if (string.IsNullOrEmpty(result.ErrorMessage))
+                    // Only fail if there are actual errors
+                    // Empty output is acceptable for commands that output to host
+                    if (!string.IsNullOrEmpty(result.ErrorMessage))
                     {
-                        throw new Exception("Activity did not return a result and/or failed while executing");
+                        // There are errors, so the execution failed
+                        result.Success = false;
+                    }
+                    else
+                    {
+                        // No errors and no output - this is acceptable for host-output commands
+                        result.Success = true;
+                        result.Output = string.Empty;
                     }
                 }
 
