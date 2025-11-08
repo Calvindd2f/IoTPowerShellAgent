@@ -17,19 +17,20 @@ namespace IoTPowerShellAgent.PowerShell
     public class PowerShellExecutor : IDisposable
     {
         private readonly ILogCallback? _logCallback;
-        public int verboseLinesProcessed = 0;
-        public int warningLinesProcessed = 0;
-        public int errorLinesProcessed = 0;
-        public int informationLinesProcessed = 0;
-        public int activityLogCounter = 0;
-        public int activityLogThreshold = 1000;
+        private int _verboseLinesProcessed = 0;
+        private int _warningLinesProcessed = 0;
+        private int _errorLinesProcessed = 0;
+        private int _informationLinesProcessed = 0;
+        private int _debugLinesProcessed = 0;
+        private int _activityLogCounter = 0;
+        private readonly int _activityLogThreshold;
 
         public PowerShellExecutor(ILogCallback? logCallback = null)
         {
-            this.activityLogCounter = 0;
-            this._logCallback = logCallback;
+            _activityLogCounter = 0;
+            _logCallback = logCallback;
             var settings = SettingsService.Instance.Settings;
-            this.activityLogThreshold = settings.ActivityLogThreshold;
+            _activityLogThreshold = settings.ActivityLogThreshold;
         }
 
         public void SendLog(string logOutput, LogOutputType logtype)
@@ -37,11 +38,11 @@ namespace IoTPowerShellAgent.PowerShell
             if (string.IsNullOrEmpty(logOutput))
                 return;
 
-            if (this.activityLogCounter > this.activityLogThreshold)
+            if (_activityLogCounter > _activityLogThreshold)
             {
                 throw new Exception("Activity Log threshold exceeded.");
             }
-            ++this.activityLogCounter;
+            ++_activityLogCounter;
 
             _logCallback?.OnLog(logOutput, logtype);
         }
@@ -50,16 +51,16 @@ namespace IoTPowerShellAgent.PowerShell
         {
             if (sender is PSDataCollection<DebugRecord> debugCollection)
             {
-                string logOutput = "";
-                for (int i = this.informationLinesProcessed; i < debugCollection.Count; i++)
+                var logBuilder = new StringBuilder();
+                for (int i = _debugLinesProcessed; i < debugCollection.Count; i++)
                 {
                     DebugRecord debugRecord = debugCollection[i];
-                    logOutput += debugRecord.Message + Environment.NewLine;
-                    ++this.informationLinesProcessed;
+                    logBuilder.AppendLine(debugRecord.Message);
+                    ++_debugLinesProcessed;
                 }
-                if (!string.IsNullOrEmpty(logOutput))
+                if (logBuilder.Length > 0)
                 {
-                    this.SendLog(logOutput.Trim(), LogOutputType.Debug);
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Debug);
                 }
             }
         }
@@ -68,15 +69,15 @@ namespace IoTPowerShellAgent.PowerShell
         {
             if (sender is PSDataCollection<ProgressRecord> progressCollection)
             {
-                string logOutput = "";
+                var logBuilder = new StringBuilder();
                 for (int i = 0; i < progressCollection.Count; i++)
                 {
                     ProgressRecord progressRecord = progressCollection[i];
-                    logOutput += $"{progressRecord.Activity}: {progressRecord.StatusDescription} ({progressRecord.PercentComplete}%)" + Environment.NewLine;
+                    logBuilder.AppendLine($"{progressRecord.Activity}: {progressRecord.StatusDescription} ({progressRecord.PercentComplete}%)");
                 }
-                if (!string.IsNullOrEmpty(logOutput))
+                if (logBuilder.Length > 0)
                 {
-                    this.SendLog(logOutput.Trim(), LogOutputType.Progress);
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Progress);
                 }
             }
         }
@@ -85,17 +86,16 @@ namespace IoTPowerShellAgent.PowerShell
         {
             if (sender is PSDataCollection<ErrorRecord> errorCollection)
             {
-                string logOutput = "";
-                for (int i = this.errorLinesProcessed; i < errorCollection.Count; i++)
+                var logBuilder = new StringBuilder();
+                for (int i = _errorLinesProcessed; i < errorCollection.Count; i++)
                 {
                     ErrorRecord errorRecord = errorCollection[i];
-                    logOutput += errorRecord.Exception?.Message ?? errorRecord.ToString();
-                    logOutput += Environment.NewLine;
-                    ++this.errorLinesProcessed;
+                    logBuilder.AppendLine(errorRecord.Exception?.Message ?? errorRecord.ToString());
+                    ++_errorLinesProcessed;
                 }
-                if (!string.IsNullOrEmpty(logOutput))
+                if (logBuilder.Length > 0)
                 {
-                    this.SendLog(logOutput.Trim(), LogOutputType.Error);
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Error);
                 }
             }
         }
@@ -104,16 +104,16 @@ namespace IoTPowerShellAgent.PowerShell
         {
             if (sender is PSDataCollection<VerboseRecord> verboseCollection)
             {
-                string logOutput = "";
-                for (int i = this.verboseLinesProcessed; i < verboseCollection.Count; i++)
+                var logBuilder = new StringBuilder();
+                for (int i = _verboseLinesProcessed; i < verboseCollection.Count; i++)
                 {
                     VerboseRecord verboseRecord = verboseCollection[i];
-                    logOutput += verboseRecord.Message + Environment.NewLine;
-                    ++this.verboseLinesProcessed;
+                    logBuilder.AppendLine(verboseRecord.Message);
+                    ++_verboseLinesProcessed;
                 }
-                if (!string.IsNullOrEmpty(logOutput))
+                if (logBuilder.Length > 0)
                 {
-                    this.SendLog(logOutput.Trim(), LogOutputType.Verbose);
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Verbose);
                 }
             }
         }
@@ -122,16 +122,16 @@ namespace IoTPowerShellAgent.PowerShell
         {
             if (sender is PSDataCollection<WarningRecord> warningCollection)
             {
-                string logOutput = "";
-                for (int i = this.warningLinesProcessed; i < warningCollection.Count; i++)
+                var logBuilder = new StringBuilder();
+                for (int i = _warningLinesProcessed; i < warningCollection.Count; i++)
                 {
                     WarningRecord warningRecord = warningCollection[i];
-                    logOutput += warningRecord.Message + Environment.NewLine;
-                    ++this.warningLinesProcessed;
+                    logBuilder.AppendLine(warningRecord.Message);
+                    ++_warningLinesProcessed;
                 }
-                if (!string.IsNullOrEmpty(logOutput))
+                if (logBuilder.Length > 0)
                 {
-                    this.SendLog(logOutput.Trim(), LogOutputType.Warning);
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Warning);
                 }
             }
         }
@@ -140,17 +140,16 @@ namespace IoTPowerShellAgent.PowerShell
         {
             if (sender is PSDataCollection<InformationRecord> infoCollection)
             {
-                string logOutput = "";
-                for (int i = this.informationLinesProcessed; i < infoCollection.Count; i++)
+                var logBuilder = new StringBuilder();
+                for (int i = _informationLinesProcessed; i < infoCollection.Count; i++)
                 {
                     InformationRecord infoRecord = infoCollection[i];
-                    logOutput += infoRecord.MessageData?.ToString() ?? string.Empty;
-                    logOutput += Environment.NewLine;
-                    ++this.informationLinesProcessed;
+                    logBuilder.AppendLine(infoRecord.MessageData?.ToString() ?? string.Empty);
+                    ++_informationLinesProcessed;
                 }
-                if (!string.IsNullOrEmpty(logOutput))
+                if (logBuilder.Length > 0)
                 {
-                    this.SendLog(logOutput.Trim(), LogOutputType.Information);
+                    SendLog(logBuilder.ToString().Trim(), LogOutputType.Information);
                 }
             }
         }
@@ -159,7 +158,7 @@ namespace IoTPowerShellAgent.PowerShell
         {
             if (e?.Data != null && e.Data.Length > 0)
             {
-                this.SendLog(e.Data, LogOutputType.Information);
+                SendLog(e.Data, LogOutputType.Information);
             }
         }
 
@@ -168,7 +167,7 @@ namespace IoTPowerShellAgent.PowerShell
             string logOutput = information?.Trim() ?? string.Empty;
             if (logOutput.Length > 0)
             {
-                this.SendLog(logOutput, LogOutputType.Information);
+                SendLog(logOutput, LogOutputType.Information);
             }
         }
 
@@ -176,14 +175,14 @@ namespace IoTPowerShellAgent.PowerShell
         {
             if (string.IsNullOrEmpty(logOutput))
                 return;
-            this.SendLog(logOutput, LogOutputType.Information);
+            SendLog(logOutput, LogOutputType.Information);
         }
 
         public void BindEvents(System.Management.Automation.PowerShell ps, DefaultHost host)
         {
-            ps.Streams.Debug.DataAdded += new EventHandler<DataAddedEventArgs>(this.Debug_DataAdded);
-            ps.Streams.Error.DataAdded += new EventHandler<DataAddedEventArgs>(this.Error_DataAdded);
-            ps.Streams.Progress.DataAdded += new EventHandler<DataAddedEventArgs>(this.Progress_DataAdded);
+            ps.Streams.Debug.DataAdded += Debug_DataAdded;
+            ps.Streams.Error.DataAdded += Error_DataAdded;
+            ps.Streams.Progress.DataAdded += Progress_DataAdded;
 
             // Try to bind Information stream if available (PowerShell 5.0+)
             try
@@ -197,7 +196,7 @@ namespace IoTPowerShellAgent.PowerShell
                         EventInfo? eventInfo = target.GetType().GetEvent("DataAdded");
                         if (eventInfo != null)
                         {
-                            MethodInfo method = this.GetType().GetMethod("Information_DataAdded", BindingFlags.Instance | BindingFlags.Public);
+                            MethodInfo method = GetType().GetMethod("Information_DataAdded", BindingFlags.Instance | BindingFlags.Public);
                             if (method != null)
                             {
                                 Delegate? handler = Delegate.CreateDelegate(eventInfo.EventHandlerType, this, method);
@@ -213,11 +212,11 @@ namespace IoTPowerShellAgent.PowerShell
             catch
             {
                 // Fallback to host information if Information stream is not available
-                host.OnInformation += new DefaultHost.InformationDelegate(this.Host_OnInformation);
+                host.OnInformation += Host_OnInformation;
             }
 
-            ps.Streams.Verbose.DataAdded += new EventHandler<DataAddedEventArgs>(this.Verbose_DataAdded);
-            ps.Streams.Warning.DataAdded += new EventHandler<DataAddedEventArgs>(this.Warning_DataAdded);
+            ps.Streams.Verbose.DataAdded += Verbose_DataAdded;
+            ps.Streams.Warning.DataAdded += Warning_DataAdded;
         }
 
         public PowerShellExecutionResult ExecutePowerShell(string script, bool isInlinePowershell)
@@ -244,7 +243,7 @@ namespace IoTPowerShellAgent.PowerShell
 
                 runspace = RunspaceFactory.CreateRunspace(defaultHost, initialSessionState);
                 runspace.Open();
-                
+
                 powerShell = System.Management.Automation.PowerShell.Create();
                 powerShell.Runspace = runspace;
                 this.BindEvents(powerShell, defaultHost);
@@ -268,7 +267,7 @@ namespace IoTPowerShellAgent.PowerShell
                             $psHome = $PSHOME;
                             $managementPath = Join-Path $psHome 'Modules\Microsoft.PowerShell.Management\Microsoft.PowerShell.Management.psd1';
                             $utilityPath = Join-Path $psHome 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1';
-                            
+
                             # Load modules if they exist and aren't already loaded
                             if (Test-Path $managementPath) {
                                 if (-not (Get-Module -Name Microsoft.PowerShell.Management)) {
@@ -311,7 +310,7 @@ namespace IoTPowerShellAgent.PowerShell
                                 // Suppress PSSnapIn errors as they're expected in some configurations
                                 if (!errorMsg.Contains("PSSnapIn") && !errorMsg.Contains("Could not load type"))
                                 {
-                                    this.SendLog($"Module preload warning: {errorMsg}", LogOutputType.Warning);
+                                    SendLog($"Module preload warning: {errorMsg}", LogOutputType.Warning);
                                 }
                             }
                         }
@@ -320,9 +319,9 @@ namespace IoTPowerShellAgent.PowerShell
                 catch (Exception ex)
                 {
                     // Non-fatal - continue execution as modules may still work
-                    this.SendLog($"Module preload exception (non-fatal): {ex.Message}", LogOutputType.Warning);
+                    SendLog($"Module preload exception (non-fatal): {ex.Message}", LogOutputType.Warning);
                 }
-                
+
                 powerShell.AddScript(script, false);
 
                 PSInvocationSettings psinvocationSettings = new PSInvocationSettings();
@@ -396,7 +395,7 @@ namespace IoTPowerShellAgent.PowerShell
                 result.Success = false;
                 result.Exception = ex;
                 result.ErrorMessage = ex.ToString();
-                this.SendLog(ex.ToString(), LogOutputType.Error);
+                SendLog(ex.ToString(), LogOutputType.Error);
             }
             finally
             {
@@ -421,6 +420,13 @@ namespace IoTPowerShellAgent.PowerShell
         public void Dispose()
         {
             // Cleanup if needed
+            if (_logCallback is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+            GC.SuppressFinalize(this);
+            // Note: Do not call GC.Collect() - let the GC manage itself
+            // Calling GC.Collect() can cause performance issues and is an anti-pattern
         }
     }
 

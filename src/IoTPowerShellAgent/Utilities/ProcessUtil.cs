@@ -75,9 +75,9 @@ namespace IoTPowerShellAgent.Utilities
                     return 0.0;
                 }
 
-                long currentProcessTime = WindowsApiInterop.FileTimeToLong(kernelTime) + 
-                                         WindowsApiInterop.FileTimeToLong(userTime);
-                long currentSystemTime = WindowsApiInterop.FileTimeToLong(systemKernelTime) + 
+                long currentProcessTime = WindowsApiInterop.FileTimeToLong(kernelTime) +
+                                        WindowsApiInterop.FileTimeToLong(userTime);
+                long currentSystemTime = WindowsApiInterop.FileTimeToLong(systemKernelTime) +
                                         WindowsApiInterop.FileTimeToLong(systemUserTime);
 
                 DateTime now = DateTime.UtcNow;

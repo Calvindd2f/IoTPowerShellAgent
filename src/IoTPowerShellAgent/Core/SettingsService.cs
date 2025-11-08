@@ -46,11 +46,9 @@ namespace IoTPowerShellAgent.Core
         {
             get
             {
-                if (_settings == null)
-                {
-                    _settings = new ServiceSettings();
-                }
-                return _settings;
+                // Thread-safe: _settings is set in constructor and never null after LoadSettings()
+                // If LoadSettings() fails, it sets _settings to a new instance
+                return _settings ?? new ServiceSettings();
             }
         }
 
@@ -162,5 +160,35 @@ namespace IoTPowerShellAgent.Core
         /// Script execution timeout in seconds
         /// </summary>
         public int ScriptTimeoutSeconds { get; set; } = 300;
+
+        /// <summary>
+        /// Whether auto-updates are enabled
+        /// </summary>
+        public bool EnableAutoUpdates { get; set; } = true;
+
+        /// <summary>
+        /// GitHub repository URL for releases (e.g., https://api.github.com/repos/org/repo/releases/latest)
+        /// </summary>
+        public string? GitHubReleaseUrl { get; set; }
+
+        /// <summary>
+        /// Auto-update check interval in hours (default: 48)
+        /// </summary>
+        public int AutoUpdateIntervalHours { get; set; } = 48;
+
+        /// <summary>
+        /// Transport protocol to use (Amqp, Mqtt, Mqtt_WebSocket_Only). Default: Amqp
+        /// </summary>
+        public string TransportType { get; set; } = "Amqp";
+
+        /// <summary>
+        /// Azure IoT Hub hostname (alternative to connection string)
+        /// </summary>
+        public string? AzureIotHubHost { get; set; }
+
+        /// <summary>
+        /// Shared access key (alternative to connection string, base64 encoded)
+        /// </summary>
+        public string? SharedAccessKey { get; set; }
     }
 }

@@ -51,3 +51,5 @@ bld/
 # Local settings
 config/appsettings.Development.json
 config/appsettings.Local.json
+AGENTS.md
+.claude/agents/repo_expert.md

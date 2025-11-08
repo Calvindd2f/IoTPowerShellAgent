@@ -66,6 +66,45 @@ dotnet build src/IoTPowerShellAgent/IoTPowerShellAgent.csproj
 
 ## Running
 
+### Debug Mode (Interactive Testing)
+
+Interactive testing mode that allows you to test PowerShell execution without connecting to IoT Hub:
+
+```bash
+cd src/IoTPowerShellAgent
+dotnet run -- --debug
+# or
+dotnet run -- -d
+```
+
+This mode provides an interactive shell where you can:
+- Execute PowerShell commands directly
+- Test base64-encoded scripts
+- View environment metrics
+- Run sample test scripts
+
+**Example Usage:**
+```
+PS> Get-Date
+PS> Get-Process | Select-Object -First 5 Name, CPU
+PS> base64:RwBlAHQALQBEAGEAdABlAA==
+PS> metrics
+PS> sample
+PS> help
+PS> exit
+```
+
+### Test Mode (One-Time Execution)
+
+Run a single test without IoT Hub connection:
+
+```bash
+dotnet run -- --test                           # Run sample test
+dotnet run -- --test --script="Get-Date"       # Test custom script
+dotnet run -- --test --script=<base64> --base64 # Test base64 script
+dotnet run -- --test --metrics                # Test environment metrics
+```
+
 ### Console Mode (Development)
 
 ```bash
@@ -73,13 +112,23 @@ cd src/IoTPowerShellAgent
 dotnet run
 ```
 
-This mode allows you to see console output and debug the service.
+This mode runs the service as a console application, connecting to IoT Hub if configured. Use `--debug` for testing without IoT Hub.
 
 ### Windows Service Mode (Production)
 
 1. Build the project in Release mode
-2. Install as a Windows Service using `sc` or a service installer tool
-3. Configure the service to run under an appropriate account
+2. Install the service using the installer:
+   ```bash
+   IoTPowerShellAgent.exe install [orgId]
+   ```
+   The installer automatically configures the service to run as `NT AUTHORITY\SYSTEM`, ensuring PowerShell scripts execute with SYSTEM privileges.
+3. Update the configuration file with your IoT Hub connection string
+4. Start the service:
+   ```bash
+   IoTPowerShellAgent.exe start [orgId]
+   ```
+
+**Note**: The service is configured to run as `NT AUTHORITY\SYSTEM` by default. All PowerShell scripts executed through the service will run with SYSTEM privileges. Use the `status` command to verify the service account configuration.
 
 ## Usage via IoT Hub
 
@@ -123,11 +172,13 @@ $result = Get-Process | Select-Object Name, CPU
 
 ## Security Considerations
 
+- **Service Account**: The service runs as `NT AUTHORITY\SYSTEM` by default, giving executed PowerShell scripts full system privileges. This is intentional for maximum script execution capabilities, but requires careful access control to the IoT Hub.
 - Store connection strings securely
-- Limit script execution permissions
+- Limit script execution permissions through IoT Hub access control
 - Monitor activity logs for suspicious activity
 - Use Azure IoT Hub device authentication
 - Review and audit all executed scripts
+- Only grant access to trusted devices/modules in Azure IoT Hub
 
 ## Troubleshooting
 

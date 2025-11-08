@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using IoTPowerShellAgent.Core;
 using IoTPowerShellAgent.IoT;
 using IoTPowerShellAgent.PowerShell;
+using IoTPowerShellAgent.Utilities;
 
 namespace IoTPowerShellAgent.TestHelpers
 {
@@ -89,7 +90,7 @@ namespace IoTPowerShellAgent.TestHelpers
         {
             Console.WriteLine("\n=== Testing with Sample Script ===");
             string sampleScript = "Get-Process | Select-Object -First 3 Name, CPU, WorkingSet | Format-Table";
-            
+
             return ExecuteScriptLocally(sampleScript, isInlinePowershell: false);
         }
 
@@ -101,8 +102,47 @@ namespace IoTPowerShellAgent.TestHelpers
             Console.WriteLine("\n=== Testing with Base64 Encoded Script ===");
             string script = "Write-Host 'Hello from Base64!' ; Get-Date";
             string base64Script = Convert.ToBase64String(Encoding.UTF8.GetBytes(script));
-            
+
             return ExecuteScriptLocally(base64Script, isInlinePowershell: false, isBase64Encoded: true);
+        }
+
+        /// <summary>
+        /// Tests environment metrics collection
+        /// </summary>
+        public async Task TestEnvironmentMetrics()
+        {
+            Console.WriteLine("\n=== Testing Environment Metrics Collection ===");
+
+            var metricsCollector = new EnvironmentMetricsCollector(_logCallback);
+
+            try
+            {
+                Console.WriteLine("Collecting environment metrics...");
+                await metricsCollector.LogAllMetricsAsync().ConfigureAwait(false);
+
+                Console.WriteLine("\n=== Individual Metric Tests ===");
+
+                var adDomain = await metricsCollector.GetAdDomainAsync().ConfigureAwait(false);
+                Console.WriteLine($"AD Domain: {adDomain ?? "null"}");
+
+                var isDomainController = await metricsCollector.GetIsAdDomainControllerAsync().ConfigureAwait(false);
+                Console.WriteLine($"Is Domain Controller: {isDomainController}");
+
+                var isEntraConnect = metricsCollector.GetIsEntraConnectServer();
+                Console.WriteLine($"Is Entra Connect Server: {isEntraConnect}");
+
+                var macAddress = metricsCollector.GetMacAddress();
+                Console.WriteLine($"MAC Address: {macAddress ?? "null"}");
+
+                var entraDomain = await metricsCollector.GetEntraDomainAsync().ConfigureAwait(false);
+                Console.WriteLine($"Entra Domain: {entraDomain ?? "null"}");
+
+                Console.WriteLine("\n✓ Environment metrics collection completed");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"✗ Error collecting metrics: {ex}");
+            }
         }
 
         private static bool IsBase64String(string str)

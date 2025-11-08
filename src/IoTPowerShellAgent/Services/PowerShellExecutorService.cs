@@ -3,8 +3,10 @@ using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Devices.Shared;
+using IoTPowerShellAgent.Core;
 using IoTPowerShellAgent.IoT;
 using IoTPowerShellAgent.Utilities;
+using IoTPowerShellAgent.PowerShell;
 
 namespace IoTPowerShellAgent.Services
 {
@@ -16,6 +18,10 @@ namespace IoTPowerShellAgent.Services
         private IoTHubService? _iotHubService;
         private CancellationTokenSource? _cancellationTokenSource;
         private Task? _serviceTask;
+        private Task? _autoUpdaterTask;
+        private EnvironmentMetricsCollector? _metricsCollector;
+        private AutoUpdater? _autoUpdater;
+        private EventLogCallback? _eventLogCallback;
 
         public PowerShellExecutorService()
         {
@@ -44,24 +50,49 @@ namespace IoTPowerShellAgent.Services
                     // Set thread priority for better responsiveness
                     ProcessUtil.SetThreadPriority(WindowsApiInterop.THREAD_PRIORITY_NORMAL);
 
-                    _iotHubService = new IoTHubService();
-                    await _iotHubService.ConnectAsync();
+                    // Initialize event log callback first
+                    _eventLogCallback = new EventLogCallback(ServiceName);
+
+                    // Initialize IoT Hub service with event log callback
+                    // EventLogCallback will write to event log, then forward to IoT Hub for telemetry
+                    _iotHubService = new IoTHubService(_eventLogCallback);
+                    await _iotHubService.ConnectAsync().ConfigureAwait(false);
+
+                    // Initialize metrics collector
+                    _metricsCollector = new EnvironmentMetricsCollector(_iotHubService);
+
+                    // Collect and log environment metrics
+                    await _metricsCollector.LogAllMetricsAsync(_cancellationTokenSource.Token).ConfigureAwait(false);
+
+                    // Initialize and start auto-updater if enabled
+                    var settings = SettingsService.Instance.Settings;
+                    if (settings.EnableAutoUpdates)
+                    {
+                        var updateInterval = TimeSpan.FromHours(settings.AutoUpdateIntervalHours);
+                        _autoUpdater = new AutoUpdater(
+                            _eventLogCallback, // Use event log callback for auto-updater logs
+                            settings.GitHubReleaseUrl,
+                            enabled: true,
+                            updateInterval: updateInterval
+                        );
+
+                        // Start auto-updater in background
+                        _autoUpdaterTask = Task.Run(() => _autoUpdater.RunAutoUpdaterAsync(_cancellationTokenSource.Token), _cancellationTokenSource.Token);
+                    }
 
                     // Report service status to IoT Hub
-                    await ReportServiceStatusAsync("Running");
+                    await ReportServiceStatusAsync("Running").ConfigureAwait(false);
 
                     // Keep service running
                     while (!_cancellationTokenSource.Token.IsCancellationRequested)
                     {
-                        await Task.Delay(1000, _cancellationTokenSource.Token);
+                        await Task.Delay(1000, _cancellationTokenSource.Token).ConfigureAwait(false);
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Log error but don't crash service
-                    System.Diagnostics.EventLog.WriteEntry(ServiceName,
-                        $"Service error: {ex}",
-                        System.Diagnostics.EventLogEntryType.Error);
+                    // Log error to event log
+                    _eventLogCallback?.WriteError($"Service error: {ex}");
                 }
             });
         }
@@ -71,19 +102,24 @@ namespace IoTPowerShellAgent.Services
             try
             {
                 _cancellationTokenSource?.Cancel();
+
+                // Wait for both service task and auto-updater task
                 _serviceTask?.Wait(TimeSpan.FromSeconds(30));
+                _autoUpdaterTask?.Wait(TimeSpan.FromSeconds(10));
 
                 if (_iotHubService != null)
                 {
                     ReportServiceStatusAsync("Stopped").Wait(TimeSpan.FromSeconds(5));
                     _iotHubService.Dispose();
                 }
+
+                _autoUpdater?.Dispose();
+                _eventLogCallback?.Dispose();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.EventLog.WriteEntry(ServiceName,
-                    $"Error stopping service: {ex}",
-                    System.Diagnostics.EventLogEntryType.Error);
+                // Log error to event log
+                _eventLogCallback?.WriteError($"Error stopping service: {ex}");
             }
         }
 
@@ -104,10 +140,39 @@ namespace IoTPowerShellAgent.Services
                         ["memoryUsageMB"] = workingSetMB,
                         ["privateMemoryMB"] = privateMB,
                         ["peakMemoryMB"] = peakMB,
-                        ["cpuUsagePercent"] = Math.Round(cpuUsage, 2)
+                        ["cpuUsagePercent"] = Math.Round(cpuUsage, 2),
+                        ["version"] = Core.VersionInfo.Version
                     };
 
-                    await _iotHubService.UpdateTwinAsync(properties);
+                    // Add environment metrics if collector is available
+                    if (_metricsCollector != null)
+                    {
+                        try
+                        {
+                            var metrics = await _metricsCollector.CollectAllMetricsAsync(_cancellationTokenSource?.Token ?? CancellationToken.None).ConfigureAwait(false);
+
+                            // Add metrics to twin properties
+                            foreach (var metric in metrics)
+                            {
+                                if (metric.Key != "collectedAt" && metric.Value != null)
+                                {
+                                    properties[metric.Key] = metric.Value;
+                                }
+                            }
+
+                            if (metrics.ContainsKey("collectedAt") && metrics["collectedAt"] is DateTime collectedAt)
+                            {
+                                properties["environmentMetricsCollectedAt"] = collectedAt;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log but don't fail - metrics collection is optional
+                            _eventLogCallback?.WriteWarning($"Failed to collect environment metrics: {ex.Message}");
+                        }
+                    }
+
+                    await _iotHubService.UpdateTwinAsync(properties).ConfigureAwait(false);
                 }
             }
             catch

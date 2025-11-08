@@ -34,8 +34,8 @@ namespace IoTPowerShellAgent.Utilities
                 throw new ArgumentNullException(nameof(input));
             }
 
-            error = null;
-            object obj2;
+            error = null!;
+            object? obj2 = null!;
             try
             {
                 if (Regex.Match(input, "^\\s*\\[").Success)
@@ -43,16 +43,16 @@ namespace IoTPowerShellAgent.Utilities
                     JArray.Parse(input);
                 }
 
-                object obj = JsonConvert.DeserializeObject(input, new JsonSerializerSettings
+                object? obj = JsonConvert.DeserializeObject(input, new JsonSerializerSettings
                 {
                     TypeNameHandling = TypeNameHandling.None,
                     MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
                     MaxDepth = maxDepth
                 });
-                JObject jobject = obj as JObject;
+                JObject? jobject = obj as JObject;
                 if (jobject == null)
                 {
-                    JArray jarray = obj as JArray;
+                    JArray? jarray = obj as JArray;
                     if (jarray == null)
                     {
                         obj2 = obj;
@@ -60,7 +60,7 @@ namespace IoTPowerShellAgent.Utilities
                     else
                     {
                         obj2 = (returnHashtable
-                            ? JsonObject.PopulateHashTableFromJArray(jarray, out error)
+                            ? JsonObject.PopulateHashTableFromJArray(jarray, out ErrorRecord? error2)
                             : JsonObject.PopulateFromJArray(jarray, out error));
                     }
                 }
@@ -81,11 +81,11 @@ namespace IoTPowerShellAgent.Utilities
                         new object[] { ex.Message }), ex);
             }
 
-            return obj2;
+            return obj2!;
         }
 
-        private static PSObject PopulateFromJDictionary(JObject entries,
-            JsonObject.DuplicateMemberHashSet memberHashTracker, out ErrorRecord error)
+        private static PSObject? PopulateFromJDictionary(JObject entries,
+            JsonObject.DuplicateMemberHashSet memberHashTracker, out ErrorRecord? error)
         {
             error = null;
             PSObject psobject = new PSObject(entries.Count);
@@ -96,7 +96,7 @@ namespace IoTPowerShellAgent.Utilities
                     string text = string.Format(CultureInfo.CurrentCulture, "Empty key in JSON string", new object[0]);
                     error = new ErrorRecord(new InvalidOperationException(text), "EmptyKeyInJsonString",
                         ErrorCategory.InvalidData, null);
-                    return null;
+                    return null!;
                 }
 
                 string text2;
@@ -107,7 +107,7 @@ namespace IoTPowerShellAgent.Utilities
                         new object[] { keyValuePair.Key });
                     error = new ErrorRecord(new InvalidOperationException(text3), "DuplicateKeysInJsonString",
                         ErrorCategory.InvalidData, null);
-                    return null;
+                    return null!;
                 }
 
                 string text4;
@@ -117,24 +117,24 @@ namespace IoTPowerShellAgent.Utilities
                         new object[] { text4, keyValuePair.Key });
                     error = new ErrorRecord(new InvalidOperationException(text5), "KeysWithDifferentCasingInJsonString",
                         ErrorCategory.InvalidData, null);
-                    return null;
+                    return null!;
                 }
 
                 memberHashTracker.Add(keyValuePair.Key);
                 JToken value = keyValuePair.Value;
-                object obj = JsonObject.PopulateFromJToken(value, out error);
+                object? obj = JsonObject.PopulateFromJToken(value, out error);
                 if (error != null)
                 {
-                    return null;
+                    return null!;
                 }
 
-                psobject.Properties.Add(new PSNoteProperty(keyValuePair.Key, obj));
+                psobject.Properties.Add(new PSNoteProperty(keyValuePair.Key, obj!));
             }
 
             return psobject;
         }
 
-        private static object PopulateFromJToken(JToken token, out ErrorRecord error)
+        private static object? PopulateFromJToken(JToken token, out ErrorRecord? error)
         {
             error = null;
             JValue jvalue = token as JValue;
@@ -156,20 +156,20 @@ namespace IoTPowerShellAgent.Utilities
                 return JsonObject.PopulateFromJArray(jarray, out error);
             }
 
-            return null;
+            return null!;
         }
 
-        private static object PopulateFromJArray(JArray array, out ErrorRecord error)
+        private static object? PopulateFromJArray(JArray array, out ErrorRecord? error)
         {
             error = null;
-            object[] array2 = new object[array.Count];
+            object?[] array2 = new object?[array.Count];
             int num = 0;
             foreach (JToken token in array)
             {
-                object obj = JsonObject.PopulateFromJToken(token, out error);
+                object? obj = JsonObject.PopulateFromJToken(token, out error);
                 if (error != null)
                 {
-                    return null;
+                    return null!;
                 }
 
                 array2[num++] = obj;
@@ -178,16 +178,16 @@ namespace IoTPowerShellAgent.Utilities
             return array2;
         }
 
-        private static Hashtable PopulateHashTableFromJDictionary(JObject entries, out ErrorRecord error)
+        private static Hashtable? PopulateHashTableFromJDictionary(JObject entries, out ErrorRecord? error)
         {
             error = null;
             Hashtable hashtable = new Hashtable(entries.Count);
             foreach (KeyValuePair<string, JToken> keyValuePair in entries)
             {
-                object obj = JsonObject.PopulateFromJToken(keyValuePair.Value, out error);
+                object? obj = JsonObject.PopulateFromJToken(keyValuePair.Value, out error);
                 if (error != null)
                 {
-                    return null;
+                    return null!;
                 }
 
                 hashtable.Add(keyValuePair.Key, obj);
@@ -196,16 +196,17 @@ namespace IoTPowerShellAgent.Utilities
             return hashtable;
         }
 
-        private static ArrayList PopulateHashTableFromJArray(JArray array, out ErrorRecord error)
+        private static ArrayList PopulateHashTableFromJArray(JArray array, out ErrorRecord? error)
         {
             error = null;
             ArrayList arrayList = new ArrayList(array.Count);
             foreach (JToken token in array)
             {
-                object obj = JsonObject.PopulateFromJToken(token, out error);
-                if (error != null)
+                object obj = JsonObject.PopulateFromJToken(token, out ErrorRecord? error2);
+                if (error2 != null)
                 {
-                    return null;
+                    error = error2;
+                    return null!;
                 }
 
                 arrayList.Add(obj);
@@ -250,10 +251,10 @@ namespace IoTPowerShellAgent.Utilities
             }
             catch (OperationCanceledException)
             {
-                text = null;
+                text = null!;
             }
 
-            return text;
+            return text!;
         }
 
         private static object ProcessValue(object obj, int currentDepth, in ConvertToJsonContext context)
