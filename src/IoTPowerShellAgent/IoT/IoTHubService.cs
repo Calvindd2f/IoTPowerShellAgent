@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -190,29 +192,86 @@ namespace IoTPowerShellAgent.IoT
                     var executor = new IoTPowerShellAgent.PowerShell.PowerShellExecutor(_logCallback);
                     var result = executor.ExecutePowerShell(script, request.IsInlinePowershell);
 
+                    // Compress Output field if it's large enough to benefit (threshold: 1KB)
+                    // Compression typically saves 60-80% for JSON data
+                    const int compressionThreshold = 1024; // 1KB
                     var response = new ScriptExecutionResponse
                     {
                         Success = result.Success,
                         Output = result.Output,
-                        ErrorMessage = result.ErrorMessage
+                        ErrorMessage = result.ErrorMessage,
+                        IsCompressed = false
                     };
 
+                    // Compress the Output field if it's large
+                    if (!string.IsNullOrEmpty(result.Output) && result.Output.Length > compressionThreshold)
+                    {
+                        byte[] outputBytes = Encoding.UTF8.GetBytes(result.Output);
+                        byte[] compressedBytes = CompressGZip(outputBytes);
+                        
+                        // Only use compression if it actually reduces size
+                        if (compressedBytes.Length < outputBytes.Length)
+                        {
+                            response.Output = Convert.ToBase64String(compressedBytes);
+                            response.IsCompressed = true;
+                            response.OriginalSize = outputBytes.Length;
+                            response.CompressedSize = compressedBytes.Length;
+                        }
+                    }
+
                     string responseJson = JsonSerializer.Serialize(response);
+                    byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
+                    
                     // Priority remains HIGH until this response is returned (HTTP postback)
-                    return new MethodResponse(Encoding.UTF8.GetBytes(responseJson), 200);
+                    return new MethodResponse(responseBytes, 200);
                 }
                 catch (Exception ex)
                 {
                     var errorResponse = new ScriptExecutionResponse
                     {
                         Success = false,
-                        ErrorMessage = ex.ToString()
+                        ErrorMessage = ex.ToString(),
+                        IsCompressed = false
                     };
+
+                    // Compress ErrorMessage field if it's large
+                    const int compressionThreshold = 1024;
+                    if (!string.IsNullOrEmpty(errorResponse.ErrorMessage) && errorResponse.ErrorMessage.Length > compressionThreshold)
+                    {
+                        byte[] errorBytes = Encoding.UTF8.GetBytes(errorResponse.ErrorMessage);
+                        byte[] compressedBytes = CompressGZip(errorBytes);
+                        
+                        if (compressedBytes.Length < errorBytes.Length)
+                        {
+                            errorResponse.ErrorMessage = Convert.ToBase64String(compressedBytes);
+                            errorResponse.IsCompressed = true;
+                            errorResponse.OriginalSize = errorBytes.Length;
+                            errorResponse.CompressedSize = compressedBytes.Length;
+                        }
+                    }
+
                     string responseJson = JsonSerializer.Serialize(errorResponse);
+                    byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
+                    
                     // Priority remains HIGH until this error response is returned
-                    return new MethodResponse(Encoding.UTF8.GetBytes(responseJson), 500);
+                    return new MethodResponse(responseBytes, 500);
                 }
                 // Priority is automatically restored to NORMAL here via Dispose()
+            }
+        }
+
+        /// <summary>
+        /// Compresses data using GZip compression
+        /// </summary>
+        private static byte[] CompressGZip(byte[] data)
+        {
+            using (var outputStream = new MemoryStream())
+            {
+                using (var gzipStream = new GZipStream(outputStream, CompressionMode.Compress))
+                {
+                    gzipStream.Write(data, 0, data.Length);
+                }
+                return outputStream.ToArray();
             }
         }
 
@@ -393,5 +452,19 @@ namespace IoTPowerShellAgent.IoT
         public bool Success { get; set; }
         public string Output { get; set; } = string.Empty;
         public string ErrorMessage { get; set; } = string.Empty;
+        /// <summary>
+        /// Indicates if the Output field is compressed (gzip + base64).
+        /// When true, the Output field contains base64-encoded gzip-compressed data.
+        /// Decompress by: base64 decode → gzip decompress → UTF-8 decode
+        /// </summary>
+        public bool IsCompressed { get; set; } = false;
+        /// <summary>
+        /// Original size before compression (in bytes). Only set when IsCompressed is true.
+        /// </summary>
+        public int? OriginalSize { get; set; }
+        /// <summary>
+        /// Compressed size (in bytes). Only set when IsCompressed is true.
+        /// </summary>
+        public int? CompressedSize { get; set; }
     }
 }

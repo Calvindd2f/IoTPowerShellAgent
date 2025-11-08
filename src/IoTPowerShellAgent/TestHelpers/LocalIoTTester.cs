@@ -14,13 +14,11 @@ namespace IoTPowerShellAgent.TestHelpers
     /// </summary>
     public class LocalIoTTester
     {
-        private readonly PowerShellExecutor _executor;
         private readonly TestLogCallback _logCallback;
 
         public LocalIoTTester()
         {
             _logCallback = new TestLogCallback();
-            _executor = new PowerShellExecutor(_logCallback);
         }
 
         /// <summary>
@@ -32,6 +30,10 @@ namespace IoTPowerShellAgent.TestHelpers
             Console.WriteLine($"Script (Length: {script.Length}): {script.Substring(0, Math.Min(100, script.Length))}...");
             Console.WriteLine($"IsInlinePowershell: {isInlinePowershell}, IsBase64Encoded: {isBase64Encoded}");
             Console.WriteLine();
+
+            // Create a new executor with a capturing log callback for this execution
+            var capturingCallback = new CapturingLogCallback();
+            var executor = new PowerShellExecutor(capturingCallback);
 
             try
             {
@@ -52,28 +54,54 @@ namespace IoTPowerShellAgent.TestHelpers
                 }
 
                 Console.WriteLine($"Executing script...");
-                var result = _executor.ExecutePowerShell(decodedScript, isInlinePowershell);
+                var result = executor.ExecutePowerShell(decodedScript, isInlinePowershell);
+
+                // Combine pipeline output with captured log output (for host-output commands like Format-Table)
+                string combinedOutput = result.Output;
+                string capturedOutput = capturingCallback.GetCapturedOutput();
+                
+                if (!string.IsNullOrEmpty(capturedOutput))
+                {
+                    if (!string.IsNullOrEmpty(combinedOutput))
+                    {
+                        combinedOutput = combinedOutput + Environment.NewLine + capturedOutput;
+                    }
+                    else
+                    {
+                        combinedOutput = capturedOutput;
+                    }
+                }
 
                 var response = new ScriptExecutionResponse
                 {
                     Success = result.Success,
-                    Output = result.Output,
+                    Output = combinedOutput,
                     ErrorMessage = result.ErrorMessage
                 };
 
                 Console.WriteLine();
                 Console.WriteLine("=== Execution Result ===");
                 Console.WriteLine($"Success: {response.Success}");
-                Console.WriteLine($"Output: {response.Output}");
+                if (!string.IsNullOrEmpty(response.Output))
+                {
+                    Console.WriteLine($"Output:");
+                    Console.WriteLine(response.Output);
+                }
+                else
+                {
+                    Console.WriteLine($"Output: (empty)");
+                }
                 if (!string.IsNullOrEmpty(response.ErrorMessage))
                 {
                     Console.WriteLine($"Error: {response.ErrorMessage}");
                 }
 
+                executor.Dispose();
                 return Task.FromResult(response);
             }
             catch (Exception ex)
             {
+                executor.Dispose();
                 Console.WriteLine($"Exception: {ex}");
                 return Task.FromResult(new ScriptExecutionResponse
                 {
@@ -169,6 +197,53 @@ namespace IoTPowerShellAgent.TestHelpers
             public void OnLog(string message, LogOutputType logType)
             {
                 Console.WriteLine($"[{logType}] {message}");
+            }
+        }
+
+        /// <summary>
+        /// Log callback that captures output for commands that output to host (like Format-Table)
+        /// </summary>
+        private class CapturingLogCallback : ILogCallback
+        {
+            private readonly StringBuilder _outputBuilder = new StringBuilder();
+
+            public void OnLog(string message, LogOutputType logType)
+            {
+                // Capture Information, Debug, Verbose, and Warning output
+                // Format-Table outputs to Information stream
+                // Debug messages help troubleshoot serialization issues
+                if (logType == LogOutputType.Information || 
+                    logType == LogOutputType.Verbose || 
+                    logType == LogOutputType.Debug)
+                {
+                    if (_outputBuilder.Length > 0)
+                    {
+                        _outputBuilder.AppendLine();
+                    }
+                    // Prefix debug messages for clarity
+                    if (logType == LogOutputType.Debug)
+                    {
+                        _outputBuilder.Append($"[DEBUG] {message}");
+                    }
+                    else
+                    {
+                        _outputBuilder.Append(message);
+                    }
+                }
+                else if (logType == LogOutputType.Warning)
+                {
+                    // Include warnings but mark them
+                    if (_outputBuilder.Length > 0)
+                    {
+                        _outputBuilder.AppendLine();
+                    }
+                    _outputBuilder.Append($"Warning: {message}");
+                }
+            }
+
+            public string GetCapturedOutput()
+            {
+                return _outputBuilder.ToString();
             }
         }
     }

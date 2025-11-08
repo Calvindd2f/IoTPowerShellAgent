@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Management.Automation;
@@ -8,6 +9,8 @@ using System.Text;
 using System.Globalization;
 using System.Threading.Tasks;
 using IoTPowerShellAgent.Core;
+using IoTPowerShellAgent.Utilities;
+using System.Linq;
 
 namespace IoTPowerShellAgent.PowerShell
 {
@@ -329,6 +332,16 @@ namespace IoTPowerShellAgent.PowerShell
 
                 Collection<PSObject> output = powerShell.Invoke();
 
+                // Debug: Log output count for troubleshooting
+                if (output.Count == 0)
+                {
+                    SendLog($"PowerShell output collection is empty (Count=0). Output may be going to host streams.", LogOutputType.Debug);
+                }
+                else
+                {
+                    SendLog($"PowerShell output collection has {output.Count} object(s)", LogOutputType.Debug);
+                }
+
                 // Check for errors - collect all error messages
                 if (powerShell.Streams.Error.Count > 0)
                 {
@@ -372,17 +385,75 @@ namespace IoTPowerShellAgent.PowerShell
                     }
                 }
 
+                // Handle multiple output objects by collecting them into an array
+                object? outputToSerialize = null;
                 if (output.Count > 1)
                 {
-                    throw new Exception("Activity returned more than one result. See below for details");
+                    // Multiple objects - serialize as array
+                    var outputArray = new object[output.Count];
+                    for (int i = 0; i < output.Count; i++)
+                    {
+                        outputArray[i] = output[i].BaseObject ?? output[i];
+                    }
+                    outputToSerialize = outputArray;
+                    result.RawOutput = outputArray;
+                    
+                    // Debug: Log array serialization
+                    SendLog($"Serializing array of {output.Count} objects, first object type: {outputArray[0]?.GetType().FullName ?? "null"}", LogOutputType.Debug);
                 }
-
-                if (output.Count > 0)
+                else if (output.Count == 1)
                 {
+                    // Single object
                     psobject2 = output[0];
                     result.RawOutput = psobject2;
-                    result.Output = psobject2.ToString() ?? string.Empty;
-                    result.Success = true;
+                    outputToSerialize = psobject2.BaseObject ?? psobject2;
+                    
+                    // Debug: Log the type being serialized
+                    if (outputToSerialize != null)
+                    {
+                        SendLog($"Serializing single object of type: {outputToSerialize.GetType().FullName}, IsComplex: {IsComplexObject(outputToSerialize)}", LogOutputType.Debug);
+                    }
+                }
+
+                if (outputToSerialize != null)
+                {
+                    try
+                    {
+                        // For complex objects (arrays, collections, objects with properties), serialize to JSON
+                        // For simple types (strings, numbers, dates), use ToString()
+                        if (IsComplexObject(outputToSerialize))
+                        {
+                            // Serialize complex objects to compressed JSON for efficient transmission
+                            var context = new ConvertToJsonContext(
+                                maxDepth: 1024,
+                                enumsAsStrings: true,
+                                compressOutput: true); // Compress JSON (no indentation) for smaller payload
+                            string jsonOutput = JsonObject.ConvertToJson(outputToSerialize, context);
+                            result.Output = !string.IsNullOrEmpty(jsonOutput) ? jsonOutput : string.Empty;
+                        }
+                        else
+                        {
+                            // Use ToString() for simple types (DateTime, string, numbers, etc.)
+                            string stringOutput = outputToSerialize.ToString();
+                            result.Output = !string.IsNullOrEmpty(stringOutput) ? stringOutput : string.Empty;
+                        }
+                        result.Success = true;
+                    }
+                    catch (Exception jsonEx)
+                    {
+                        // If JSON serialization fails, fall back to ToString()
+                        SendLog($"JSON serialization failed, using ToString(): {jsonEx.Message}", LogOutputType.Warning);
+                        try
+                        {
+                            result.Output = outputToSerialize.ToString() ?? string.Empty;
+                            result.Success = true;
+                        }
+                        catch
+                        {
+                            result.Output = string.Empty;
+                            result.Success = true;
+                        }
+                    }
                 }
                 else if (string.IsNullOrEmpty(result.ErrorMessage))
                 {
@@ -415,6 +486,65 @@ namespace IoTPowerShellAgent.PowerShell
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Determines if an object is complex and should be serialized to JSON
+        /// Simple types (strings, numbers, dates, booleans) return false
+        /// Complex types (arrays, collections, objects with properties) return true
+        /// </summary>
+        private static bool IsComplexObject(object obj)
+        {
+            if (obj == null)
+                return false;
+
+            Type type = obj.GetType();
+
+            // Simple types that should use ToString()
+            if (type.IsPrimitive || 
+                type == typeof(string) || 
+                type == typeof(DateTime) || 
+                type == typeof(DateTimeOffset) ||
+                type == typeof(TimeSpan) ||
+                type == typeof(Guid) ||
+                type == typeof(decimal) ||
+                type.IsEnum)
+            {
+                return false;
+            }
+
+            // Arrays and collections are complex
+            if (obj is IEnumerable && !(obj is string))
+            {
+                return true;
+            }
+
+            // Objects with properties are complex (but not simple value types)
+            if (type.IsClass && type != typeof(object))
+            {
+                // Check if it has properties beyond the base object
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                if (properties.Length > 0)
+                {
+                    return true;
+                }
+            }
+
+            // PSObject wrappers are complex if they have properties
+            if (obj is PSObject psObj)
+            {
+                var properties = psObj.Properties;
+                if (properties != null)
+                {
+                    // Check if collection has any items by iterating
+                    foreach (var prop in properties)
+                    {
+                        return true; // Has at least one property, so it's complex
+                    }
+                }
+            }
+
+            return false;
         }
 
         public void Dispose()
