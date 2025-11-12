@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
@@ -158,6 +159,49 @@ namespace IoTPowerShellAgent.IoT
         }
 
         /// <summary>
+        /// Validates the script execution request payload
+        /// </summary>
+        private (bool IsValid, string? ErrorMessage) ValidateScriptExecutionRequest(ScriptExecutionRequest? request)
+        {
+            if (request == null)
+            {
+                return (false, "Request payload is null or invalid JSON");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Script))
+            {
+                return (false, "Script field is required and cannot be empty");
+            }
+
+            // Validate script length (prevent extremely large scripts that could cause OOM)
+            const int maxScriptLength = 10 * 1024 * 1024; // 10MB max
+            if (request.Script.Length > maxScriptLength)
+            {
+                return (false, $"Script exceeds maximum length of {maxScriptLength / 1024 / 1024}MB");
+            }
+
+            // Validate base64 encoding if flagged
+            if (request.IsBase64Encoded)
+            {
+                try
+                {
+                    // Try to decode to validate base64 format
+                    byte[] bytes = Convert.FromBase64String(request.Script);
+                    if (bytes.Length == 0)
+                    {
+                        return (false, "Base64 encoded script is empty");
+                    }
+                }
+                catch (FormatException)
+                {
+                    return (false, "Script is marked as base64 encoded but contains invalid base64 data");
+                }
+            }
+
+            return (true, null);
+        }
+
+        /// <summary>
         /// Handles direct method invocation for script execution
         /// </summary>
         private async Task<MethodResponse> ExecuteScriptMethodHandler(MethodRequest methodRequest, object userContext)
@@ -172,10 +216,49 @@ namespace IoTPowerShellAgent.IoT
                 
                 try
                 {
-                    var request = JsonSerializer.Deserialize<ScriptExecutionRequest>(methodRequest.DataAsJson);
-                    if (request == null || string.IsNullOrEmpty(request.Script))
+                    // Validate JSON payload structure before deserialization
+                    if (string.IsNullOrWhiteSpace(methodRequest.DataAsJson))
                     {
-                        return new MethodResponse(400);
+                        var invalidResponse = new ScriptExecutionResponse
+                        {
+                            Success = false,
+                            ErrorMessage = "Request payload is empty or invalid",
+                            IsCompressed = false
+                        };
+                        string responseJson = JsonSerializer.Serialize(invalidResponse);
+                        return new MethodResponse(Encoding.UTF8.GetBytes(responseJson), 400);
+                    }
+
+                    // Deserialize and validate payload
+                    ScriptExecutionRequest? request;
+                    try
+                    {
+                        request = JsonSerializer.Deserialize<ScriptExecutionRequest>(methodRequest.DataAsJson);
+                    }
+                    catch (JsonException ex)
+                    {
+                        var invalidResponse = new ScriptExecutionResponse
+                        {
+                            Success = false,
+                            ErrorMessage = $"Invalid JSON payload: {ex.Message}",
+                            IsCompressed = false
+                        };
+                        string responseJson = JsonSerializer.Serialize(invalidResponse);
+                        return new MethodResponse(Encoding.UTF8.GetBytes(responseJson), 400);
+                    }
+
+                    // Validate request payload schema and content
+                    var (isValid, validationError) = ValidateScriptExecutionRequest(request);
+                    if (!isValid)
+                    {
+                        var invalidResponse = new ScriptExecutionResponse
+                        {
+                            Success = false,
+                            ErrorMessage = validationError ?? "Request validation failed",
+                            IsCompressed = false
+                        };
+                        string responseJson = JsonSerializer.Serialize(invalidResponse);
+                        return new MethodResponse(Encoding.UTF8.GetBytes(responseJson), 400);
                     }
 
                     // Handle base64 encoded scripts (optional - IoT Hub doesn't require it, but supports it)
@@ -205,6 +288,7 @@ namespace IoTPowerShellAgent.IoT
                         Success = result.Success,
                         Output = result.Output,
                         ErrorMessage = result.ErrorMessage,
+                        ErrorDetails = result.ErrorDetails, // Include structured error details
                         IsCompressed = false
                     };
 
@@ -334,7 +418,32 @@ namespace IoTPowerShellAgent.IoT
                 try
                 {
                     string messageBody = Encoding.UTF8.GetString(message.GetBytes());
-                    var request = JsonSerializer.Deserialize<ScriptExecutionRequest>(messageBody);
+                    
+                    // Validate JSON payload structure before deserialization
+                    if (string.IsNullOrWhiteSpace(messageBody))
+                    {
+                        OnLog("Input message payload is empty or invalid", LogOutputType.Error);
+                        return MessageResponse.Abandoned;
+                    }
+
+                    ScriptExecutionRequest? request;
+                    try
+                    {
+                        request = JsonSerializer.Deserialize<ScriptExecutionRequest>(messageBody);
+                    }
+                    catch (JsonException ex)
+                    {
+                        OnLog($"Invalid JSON payload in input message: {ex.Message}", LogOutputType.Error);
+                        return MessageResponse.Abandoned;
+                    }
+
+                    // Validate request payload schema and content
+                    var (isValid, validationError) = ValidateScriptExecutionRequest(request);
+                    if (!isValid)
+                    {
+                        OnLog($"Input message validation failed: {validationError}", LogOutputType.Error);
+                        return MessageResponse.Abandoned;
+                    }
 
                     if (request != null && !string.IsNullOrEmpty(request.Script))
                     {
@@ -482,6 +591,10 @@ namespace IoTPowerShellAgent.IoT
         public bool Success { get; set; }
         public string Output { get; set; } = string.Empty;
         public string ErrorMessage { get; set; } = string.Empty;
+        /// <summary>
+        /// Structured error details from PowerShell ErrorRecord (includes inner exceptions)
+        /// </summary>
+        public List<PowerShellErrorDetails>? ErrorDetails { get; set; }
         /// <summary>
         /// Indicates if the Output field is compressed (gzip + base64).
         /// When true, the Output field contains base64-encoded gzip-compressed data.

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Management.Automation;
@@ -421,13 +422,21 @@ namespace IoTPowerShellAgent.PowerShell
                     SendLog($"PowerShell output collection has {output.Count} object(s)", LogOutputType.Debug);
                 }
 
-                // Check for errors - collect all error messages
+                // Check for errors - collect all error messages with full exception details
                 if (powerShell.Streams.Error.Count > 0)
                 {
+                    var errorDetailsList = new List<PowerShellErrorDetails>();
                     StringBuilder errorBuilder = new StringBuilder();
+                    
                     foreach (ErrorRecord error in powerShell.Streams.Error)
                     {
+                        // Create structured error details with full exception information
+                        var errorDetails = PowerShellErrorDetails.FromErrorRecord(error);
+                        errorDetailsList.Add(errorDetails);
+
+                        // Build human-readable error message
                         string errorMsg = error.Exception?.Message ?? error.ToString();
+                        
                         // Check if this is a command not found error (module not loaded)
                         if (errorMsg.Contains("is not recognized") ||
                             errorMsg.Contains("was not found") ||
@@ -439,8 +448,20 @@ namespace IoTPowerShellAgent.PowerShell
                         {
                             errorBuilder.AppendLine(errorMsg);
                         }
+
+                        // Include inner exception messages in the summary
+                        var innerException = error.Exception?.InnerException;
+                        int innerDepth = 0;
+                        while (innerException != null && innerDepth < 5)
+                        {
+                            errorBuilder.AppendLine($"  Inner Exception: {innerException.Message}");
+                            innerException = innerException.InnerException;
+                            innerDepth++;
+                        }
                     }
+                    
                     result.ErrorMessage = errorBuilder.ToString();
+                    result.ErrorDetails = errorDetailsList;
                     result.Success = false;
                 }
 
@@ -552,6 +573,13 @@ namespace IoTPowerShellAgent.PowerShell
                 result.Success = false;
                 result.Exception = ex;
                 result.ErrorMessage = ex.ToString();
+                
+                // Capture structured error details including inner exceptions
+                result.ErrorDetails = new List<PowerShellErrorDetails>
+                {
+                    PowerShellErrorDetails.FromException(ex)
+                };
+                
                 SendLog(ex.ToString(), LogOutputType.Error);
             }
             finally
