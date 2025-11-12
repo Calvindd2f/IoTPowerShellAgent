@@ -4,7 +4,7 @@ BeforeAll {
     if (Test-Path $assemblyPath) {
         Add-Type -Path $assemblyPath
     }
-    
+
     # Import Pester
     Import-Module Pester -MinimumVersion 5.0
 }
@@ -19,9 +19,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should execute a simple PowerShell command successfully" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "Get-Date"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             $result.Success | Should -Be $true
             $result.ErrorMessage | Should -BeNullOrEmpty
             $result.Output | Should -Not -BeNullOrEmpty
@@ -30,9 +30,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should handle script errors correctly" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "Get-Command -Name NonExistentCommand12345"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             $result.Success | Should -Be $false
             $result.ErrorMessage | Should -Not -BeNullOrEmpty
         }
@@ -46,9 +46,9 @@ Describe "PowerShellExecutor Integration Tests" {
                     throw "Inner exception"
                 }
 "@
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             $result.Success | Should -Be $false
             $result.ErrorDetails | Should -Not -BeNullOrEmpty
             if ($result.ErrorDetails.Count -gt 0) {
@@ -59,9 +59,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should handle verbose output" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "Write-Verbose 'Test verbose message' -Verbose"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             # Verbose output should be captured via log callback
             $result.Success | Should -Be $true
         }
@@ -69,9 +69,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should handle warning output" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "Write-Warning 'Test warning message'"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             # Warning output should be captured via log callback
             $result.Success | Should -Be $true
         }
@@ -79,9 +79,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should handle error output" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "Write-Error 'Test error message'"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             $result.Success | Should -Be $false
             $result.ErrorMessage | Should -Not -BeNullOrEmpty
         }
@@ -89,14 +89,14 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should handle empty script" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = ""
-            
+
             { $executor.ExecutePowerShell($script, $false) } | Should -Throw
         }
 
         It "Should handle null script" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = $null
-            
+
             { $executor.ExecutePowerShell($script, $false) } | Should -Throw
         }
     }
@@ -105,10 +105,10 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should execute PowerShell script asynchronously" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "Start-Sleep -Seconds 1; Get-Date"
-            
+
             $task = $executor.ExecutePowerShellAsync($script, $false, [System.Threading.CancellationToken]::None)
             $result = $task.GetAwaiter().GetResult()
-            
+
             $result.Success | Should -Be $true
             $result.Output | Should -Not -BeNullOrEmpty
         }
@@ -118,9 +118,9 @@ Describe "PowerShellExecutor Integration Tests" {
             $script = "Start-Sleep -Seconds 10"
             $cts = New-Object System.Threading.CancellationTokenSource
             $cts.CancelAfter(100) # Cancel after 100ms
-            
+
             $task = $executor.ExecutePowerShellAsync($script, $false, $cts.Token)
-            
+
             { $task.GetAwaiter().GetResult() } | Should -Throw
         }
     }
@@ -129,9 +129,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should serialize simple output correctly" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "42"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             $result.Success | Should -Be $true
             $result.Output | Should -Be "42"
         }
@@ -139,9 +139,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should serialize complex objects to JSON" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "@{Name='Test'; Value=123}"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             $result.Success | Should -Be $true
             $result.Output | Should -Not -BeNullOrEmpty
             $result.Output | Should -Match "Name"
@@ -151,9 +151,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should serialize arrays correctly" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "@(1, 2, 3)"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             $result.Success | Should -Be $true
             $result.Output | Should -Not -BeNullOrEmpty
         }
@@ -163,9 +163,9 @@ Describe "PowerShellExecutor Integration Tests" {
         It "Should preload common PowerShell modules" {
             $executor = New-Object IoTPowerShellAgent.PowerShell.PowerShellExecutor
             $script = "Get-Command Get-Process | Select-Object -First 1"
-            
+
             $result = $executor.ExecutePowerShell($script, $false)
-            
+
             # Should succeed if modules are preloaded
             $result.Success | Should -Be $true
         }

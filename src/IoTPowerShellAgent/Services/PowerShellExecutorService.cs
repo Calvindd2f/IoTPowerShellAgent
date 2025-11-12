@@ -12,10 +12,11 @@ namespace IoTPowerShellAgent.Services
 {
     /// <summary>
     /// Windows Service for PowerShell execution with Azure IoT Hub integration
+    /// Orchestrates IoT Hub listener, PowerShell executor, and supporting services
     /// </summary>
     public partial class PowerShellExecutorService : ServiceBase
     {
-        private IoTHubService? _iotHubService;
+        private IIoTHubService? _iotHubService;
         private CancellationTokenSource? _cancellationTokenSource;
         private Task? _serviceTask;
         private Task? _autoUpdaterTask;
@@ -23,10 +24,14 @@ namespace IoTPowerShellAgent.Services
         private AutoUpdater? _autoUpdater;
         private EventLogCallback? _eventLogCallback;
 
-        public PowerShellExecutorService()
+        /// <summary>
+        /// Constructor for dependency injection (allows mocking for tests)
+        /// </summary>
+        public PowerShellExecutorService(IIoTHubService? iotHubService = null)
         {
             InitializeComponent();
             ServiceName = "IoTPowerShellAgent";
+            _iotHubService = iotHubService; // Allow injection for testing
         }
 
         protected override void OnStart(string[] args)
@@ -53,9 +58,12 @@ namespace IoTPowerShellAgent.Services
                     // Initialize event log callback first
                     _eventLogCallback = new EventLogCallback(ServiceName);
 
-                    // Initialize IoT Hub service with event log callback
+                    // Initialize IoT Hub service with event log callback (if not injected)
                     // EventLogCallback will write to event log, then forward to IoT Hub for telemetry
-                    _iotHubService = new IoTHubService(_eventLogCallback);
+                    if (_iotHubService == null)
+                    {
+                        _iotHubService = new IoTHubService(_eventLogCallback);
+                    }
                     await _iotHubService.ConnectAsync().ConfigureAwait(false);
 
                     // Initialize metrics collector
@@ -83,16 +91,44 @@ namespace IoTPowerShellAgent.Services
                     // Report service status to IoT Hub
                     await ReportServiceStatusAsync("Running").ConfigureAwait(false);
 
-                    // Keep service running
+                    // Keep service running with periodic status updates
+                    // Yield to allow other tasks to run and prevent thread starvation
                     while (!_cancellationTokenSource.Token.IsCancellationRequested)
                     {
                         await Task.Delay(1000, _cancellationTokenSource.Token).ConfigureAwait(false);
+                        
+                        // Yield periodically to prevent thread starvation on bursty traffic
+                        // This ensures the event loop remains responsive
+                        await Task.Yield();
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected when service is stopping
+                    _eventLogCallback?.OnLog("Service cancellation requested", LogOutputType.Information);
+                }
+                catch (AggregateException aggEx)
+                {
+                    // Unwrap aggregate exceptions for better error reporting
+                    foreach (var innerEx in aggEx.InnerExceptions)
+                    {
+                        _eventLogCallback?.WriteError($"Service error: {innerEx}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Log error to event log
+                    // Log error to event log with full details
                     _eventLogCallback?.WriteError($"Service error: {ex}");
+                    
+                    // Attempt to report error status to IoT Hub
+                    try
+                    {
+                        await ReportServiceStatusAsync("Error").ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        // Ignore if reporting fails - we're already in error state
+                    }
                 }
             });
         }
@@ -103,18 +139,59 @@ namespace IoTPowerShellAgent.Services
             {
                 _cancellationTokenSource?.Cancel();
 
-                // Wait for both service task and auto-updater task
-                _serviceTask?.Wait(TimeSpan.FromSeconds(30));
-                _autoUpdaterTask?.Wait(TimeSpan.FromSeconds(10));
+                // Wait for both service task and auto-updater task with proper async handling
+                // Use GetAwaiter().GetResult() to avoid deadlocks in sync context
+                try
+                {
+                    _serviceTask?.GetAwaiter().GetResult();
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected when cancellation is requested
+                }
+                catch (AggregateException aggEx)
+                {
+                    // Unwrap aggregate exceptions and log inner exceptions
+                    foreach (var innerEx in aggEx.InnerExceptions)
+                    {
+                        _eventLogCallback?.WriteError($"Service task error: {innerEx}");
+                    }
+                }
 
+                try
+                {
+                    _autoUpdaterTask?.GetAwaiter().GetResult();
+                }
+                catch (OperationCanceledException)
+                {
+                    // Expected when cancellation is requested
+                }
+                catch (AggregateException aggEx)
+                {
+                    foreach (var innerEx in aggEx.InnerExceptions)
+                    {
+                        _eventLogCallback?.WriteError($"Auto-updater task error: {innerEx}");
+                    }
+                }
+
+                // Report final status before disposing
                 if (_iotHubService != null)
                 {
-                    ReportServiceStatusAsync("Stopped").Wait(TimeSpan.FromSeconds(5));
+                    try
+                    {
+                        ReportServiceStatusAsync("Stopped").GetAwaiter().GetResult();
+                    }
+                    catch (Exception ex)
+                    {
+                        _eventLogCallback?.WriteWarning($"Failed to report stopped status: {ex.Message}");
+                    }
+                    
                     _iotHubService.Dispose();
                 }
 
                 _autoUpdater?.Dispose();
                 _eventLogCallback?.Dispose();
+                _cancellationTokenSource?.Dispose();
             }
             catch (Exception ex)
             {

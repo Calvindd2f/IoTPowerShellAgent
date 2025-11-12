@@ -17,7 +17,7 @@ namespace IoTPowerShellAgent.IoT
     /// <summary>
     /// Service for Azure IoT Hub integration
     /// </summary>
-    public class IoTHubService : IDisposable, ILogCallback
+    public class IoTHubService : IIoTHubService
     {
         private DeviceClient? _deviceClient;
         private ModuleClient? _moduleClient;

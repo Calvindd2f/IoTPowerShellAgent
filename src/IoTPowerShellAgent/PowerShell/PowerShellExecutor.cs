@@ -19,7 +19,7 @@ namespace IoTPowerShellAgent.PowerShell
     /// <summary>
     /// Executes PowerShell scripts and handles output streaming
     /// </summary>
-    public class PowerShellExecutor : IDisposable
+    public class PowerShellExecutor : IPowerShellExecutor
     {
         private readonly ILogCallback? _logCallback;
         private int _verboseLinesProcessed = 0;
