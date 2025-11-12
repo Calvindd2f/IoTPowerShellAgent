@@ -166,6 +166,10 @@ namespace IoTPowerShellAgent.IoT
             // Priority is automatically restored to NORMAL when execution completes
             using (new ProcessPriorityManager())
             {
+                // Create cancellation token with timeout from settings
+                var settings = SettingsService.Instance.Settings;
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.ScriptTimeoutSeconds));
+                
                 try
                 {
                     var request = JsonSerializer.Deserialize<ScriptExecutionRequest>(methodRequest.DataAsJson);
@@ -190,7 +194,8 @@ namespace IoTPowerShellAgent.IoT
                     }
 
                     var executor = new IoTPowerShellAgent.PowerShell.PowerShellExecutor(_logCallback);
-                    var result = executor.ExecutePowerShell(script, request.IsInlinePowershell);
+                    // Use async execution with cancellation token to prevent blocking IoT listener
+                    var result = await executor.ExecutePowerShellAsync(script, request.IsInlinePowershell, cts.Token).ConfigureAwait(false);
 
                     // Compress Output field if it's large enough to benefit (threshold: 1KB)
                     // Compression typically saves 60-80% for JSON data
@@ -224,6 +229,21 @@ namespace IoTPowerShellAgent.IoT
                     
                     // Priority remains HIGH until this response is returned (HTTP postback)
                     return new MethodResponse(responseBytes, 200);
+                }
+                catch (OperationCanceledException)
+                {
+                    var errorResponse = new ScriptExecutionResponse
+                    {
+                        Success = false,
+                        ErrorMessage = $"Script execution was cancelled or timed out after {settings.ScriptTimeoutSeconds} seconds.",
+                        IsCompressed = false
+                    };
+
+                    string responseJson = JsonSerializer.Serialize(errorResponse);
+                    byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
+                    
+                    // Priority remains HIGH until this error response is returned
+                    return new MethodResponse(responseBytes, 408); // 408 Request Timeout
                 }
                 catch (Exception ex)
                 {
@@ -301,12 +321,16 @@ namespace IoTPowerShellAgent.IoT
         /// <summary>
         /// Handles input messages from IoT Hub
         /// </summary>
-        private Task<MessageResponse> HandleInputMessage(Message message, object userContext)
+        private async Task<MessageResponse> HandleInputMessage(Message message, object userContext)
         {
             // Elevate process priority to HIGH during execution for optimal performance
             // Priority is automatically restored to NORMAL when execution completes
             using (new ProcessPriorityManager())
             {
+                // Create cancellation token with timeout from settings
+                var settings = SettingsService.Instance.Settings;
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.ScriptTimeoutSeconds));
+                
                 try
                 {
                     string messageBody = Encoding.UTF8.GetString(message.GetBytes());
@@ -315,15 +339,21 @@ namespace IoTPowerShellAgent.IoT
                     if (request != null && !string.IsNullOrEmpty(request.Script))
                     {
                         var executor = new IoTPowerShellAgent.PowerShell.PowerShellExecutor(_logCallback);
-                        executor.ExecutePowerShell(request.Script, request.IsInlinePowershell);
+                        // Use async execution with cancellation token to prevent blocking IoT listener
+                        await executor.ExecutePowerShellAsync(request.Script, request.IsInlinePowershell, cts.Token).ConfigureAwait(false);
                     }
 
-                    return Task.FromResult(MessageResponse.Completed);
+                    return MessageResponse.Completed;
+                }
+                catch (OperationCanceledException)
+                {
+                    OnLog($"Script execution was cancelled or timed out after {settings.ScriptTimeoutSeconds} seconds.", LogOutputType.Warning);
+                    return MessageResponse.Abandoned;
                 }
                 catch (Exception ex)
                 {
                     OnLog($"Error processing input message: {ex}", LogOutputType.Error);
-                    return Task.FromResult(MessageResponse.Abandoned);
+                    return MessageResponse.Abandoned;
                 }
                 // Priority is automatically restored to NORMAL here via Dispose()
             }

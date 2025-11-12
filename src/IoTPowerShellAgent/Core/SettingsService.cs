@@ -162,6 +162,12 @@ namespace IoTPowerShellAgent.Core
         public int ScriptTimeoutSeconds { get; set; } = 300;
 
         /// <summary>
+        /// Maximum number of concurrent PowerShell runspaces (default: 2)
+        /// Used to throttle concurrent script executions and prevent OOM issues
+        /// </summary>
+        public int MaxConcurrentRunspaces { get; set; } = 2;
+
+        /// <summary>
         /// Whether auto-updates are enabled
         /// </summary>
         public bool EnableAutoUpdates { get; set; } = true;
