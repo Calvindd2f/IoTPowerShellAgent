@@ -73,7 +73,7 @@ namespace IoTPowerShellAgent.Core
             {
                 Message = errorRecord.Exception?.Message ?? errorRecord.ToString(),
                 ExceptionType = errorRecord.Exception?.GetType().FullName,
-                Category = errorRecord.CategoryInfo?.Category?.ToString(),
+                Category = errorRecord.CategoryInfo?.Category.ToString(),
                 FullyQualifiedErrorId = errorRecord.FullyQualifiedErrorId,
                 TargetObject = errorRecord.TargetObject?.ToString(),
                 ScriptStackTrace = errorRecord.ScriptStackTrace

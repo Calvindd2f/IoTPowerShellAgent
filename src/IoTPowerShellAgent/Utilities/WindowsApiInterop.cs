@@ -96,7 +96,7 @@ namespace IoTPowerShellAgent.Utilities
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool SetThreadPriority(IntPtr hThread, int nPriority);
 
-        [DllImport("kernel32.dll")]
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr GetCurrentThread();
 
         public const int THREAD_PRIORITY_HIGHEST = 2;

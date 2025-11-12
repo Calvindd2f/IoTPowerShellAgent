@@ -225,8 +225,8 @@ namespace IoTPowerShellAgent.IoT
                             ErrorMessage = "Request payload is empty or invalid",
                             IsCompressed = false
                         };
-                        string responseJson = JsonSerializer.Serialize(invalidResponse);
-                        return new MethodResponse(Encoding.UTF8.GetBytes(responseJson), 400);
+                        string invalidResponseJson = JsonSerializer.Serialize(invalidResponse);
+                        return new MethodResponse(Encoding.UTF8.GetBytes(invalidResponseJson), 400);
                     }
 
                     // Deserialize and validate payload
@@ -243,8 +243,8 @@ namespace IoTPowerShellAgent.IoT
                             ErrorMessage = $"Invalid JSON payload: {ex.Message}",
                             IsCompressed = false
                         };
-                        string responseJson = JsonSerializer.Serialize(invalidResponse);
-                        return new MethodResponse(Encoding.UTF8.GetBytes(responseJson), 400);
+                        string invalidResponseJson = JsonSerializer.Serialize(invalidResponse);
+                        return new MethodResponse(Encoding.UTF8.GetBytes(invalidResponseJson), 400);
                     }
 
                     // Validate request payload schema and content
@@ -257,8 +257,8 @@ namespace IoTPowerShellAgent.IoT
                             ErrorMessage = validationError ?? "Request validation failed",
                             IsCompressed = false
                         };
-                        string responseJson = JsonSerializer.Serialize(invalidResponse);
-                        return new MethodResponse(Encoding.UTF8.GetBytes(responseJson), 400);
+                        string invalidResponseJson = JsonSerializer.Serialize(invalidResponse);
+                        return new MethodResponse(Encoding.UTF8.GetBytes(invalidResponseJson), 400);
                     }
 
                     // Handle base64 encoded scripts (optional - IoT Hub doesn't require it, but supports it)

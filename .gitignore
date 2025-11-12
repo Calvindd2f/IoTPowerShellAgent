@@ -24,24 +24,6 @@ bld/
 *.userosscache
 *.sln.docstates
 
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
-
-# Visual Studio cache/options directory
-.vs/
-
 # NuGet Packages
 *.nupkg
 *.snupkg
@@ -53,3 +35,12 @@ config/appsettings.Development.json
 config/appsettings.Local.json
 AGENTS.md
 .claude/agents/repo_expert.md
+
+# Test results
+*.trx
+*.coverage
+*.coveragexml
+TestResults/
+
+# Pester test results
+PesterResults.xml
