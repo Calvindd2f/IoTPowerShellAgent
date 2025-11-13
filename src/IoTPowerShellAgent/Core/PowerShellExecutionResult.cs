@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using IoTPowerShellAgent.Utilities;
 
 namespace IoTPowerShellAgent.Core
@@ -22,6 +23,11 @@ namespace IoTPowerShellAgent.Core
         /// Any error message if execution failed
         /// </summary>
         public string ErrorMessage { get; set; }
+
+        /// <summary>
+        /// Structured error details from PowerShell ErrorRecord (includes inner exceptions)
+        /// </summary>
+        public List<PowerShellErrorDetails>? ErrorDetails { get; set; }
 
         /// <summary>
         /// The exception that occurred during execution, if any
@@ -57,7 +63,8 @@ namespace IoTPowerShellAgent.Core
                     Success,
                     Output,
                     ErrorMessage,
-                    Exception = Exception?.ToString(),
+                    ErrorDetails,
+                    Exception = Exception != null ? PowerShellErrorDetails.FromException(Exception) : null,
                     RawOutput = RawOutput
                 };
 

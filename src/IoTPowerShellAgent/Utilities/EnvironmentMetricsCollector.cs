@@ -41,7 +41,7 @@ if ($domainInfo -and $domainInfo -ne 'WORKGROUP') {
     return $null
 }";
 
-                var result = await Task.Run(() => _executor.ExecutePowerShell(script, isInlinePowershell: false), cancellationToken).ConfigureAwait(false);
+                var result = await _executor.ExecutePowerShellAsync(script, isInlinePowershell: false, cancellationToken).ConfigureAwait(false);
 
                 if (result.Success && !string.IsNullOrWhiteSpace(result.Output))
                 {
@@ -76,7 +76,7 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
     return $false
 }";
 
-                var result = await Task.Run(() => _executor.ExecutePowerShell(script, isInlinePowershell: false), cancellationToken).ConfigureAwait(false);
+                var result = await _executor.ExecutePowerShellAsync(script, isInlinePowershell: false, cancellationToken).ConfigureAwait(false);
 
                 if (result.Success && !string.IsNullOrWhiteSpace(result.Output))
                 {

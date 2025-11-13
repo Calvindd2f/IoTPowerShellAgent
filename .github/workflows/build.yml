@@ -1,108 +1,55 @@
-name: CI
+name: Build & Test
 
-on:
-  workflow_dispatch:
-    inputs:
-      configuration:
-        description: 'Build configuration'
-        required: true
-        default: 'Release'
-        type: choice
-        options:
-          - Debug
-          - Release
-          - All
-      targetFramework:
-        description: 'Target framework'
-        required: true
-        default: 'net8.0-windows'
-      noRestore:
-        description: 'Skip dotnet restore'
-        required: false
-        default: 'false'
-        type: boolean
-      verbose:
-        description: 'Verbose dotnet output'
-        required: false
-        default: 'false'
-        type: boolean
+on: [push, pull_request]
 
 jobs:
   build:
-    name: Build (${{ matrix.configuration }})
     runs-on: windows-latest
-    # Run this matrix row only if user asked for All or it matches the chosen configuration
-    if: ${{ github.event.inputs.configuration == 'All' || matrix.configuration == github.event.inputs.configuration }}
-    strategy:
-      fail-fast: false
-      matrix:
-        configuration: [Debug, Release]
-
-    env:
-      PROJECT_PATH: src/IoTPowerShellAgent/IoTPowerShellAgent.csproj
-      TARGET_FRAMEWORK: ${{ github.event.inputs.targetFramework }}
-      VERBOSE_FLAG: ${{ github.event.inputs.verbose == 'true' ? '--verbosity detailed' : '--verbosity minimal' }}
-      NO_RESTORE_FLAG: ${{ github.event.inputs.noRestore == 'true' ? '--no-restore' : '' }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v3
+      - uses: actions/checkout@v4
         with:
-          dotnet-version: '8.0.x'
+          fetch-depth: 0 # Fetch all history for semantic versioning
 
-      - name: Show .NET SDK version
-        run: dotnet --version
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          path: ~/.nuget/packages
-          # fallback to OS-based key if no lock file is present
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-
+          dotnet-version: "8.0.x"
 
-      - name: Restore (conditional)
-        if: ${{ github.event.inputs.noRestore != 'true' }}
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+      - name: Determine version from Git tag
+        id: version
+        run: |
+          $tag = git describe --tags --abbrev=0 2>$null
+          if ($tag) {
+            $version = $tag -replace '^v', ''
+            Write-Host "Version from tag: $version"
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No tag found, using default version"
+            echo "version=1.0.0" >> $env:GITHUB_OUTPUT
+          }
+        shell: pwsh
+
+      - name: Restore dependencies
+        run: dotnet restore
 
       - name: Build
-        shell: pwsh
-        run: |
-          Write-Host "Building project: $env:PROJECT_PATH"
-          Write-Host "Configuration: ${{ matrix.configuration }}"
-          Write-Host "Framework: $env:TARGET_FRAMEWORK"
-          dotnet build "$env:PROJECT_PATH" `
-            --configuration "${{ matrix.configuration }}" `
-            --framework "$env:TARGET_FRAMEWORK" `
-            --no-incremental `
-            $env:NO_RESTORE_FLAG `
-            $env:VERBOSE_FLAG `
-            /p:BuildInParallel=true `
-            /p:Deterministic=true `
-            /p:EnableSourceLink=true `
-            /p:GenerateAssemblyInfo=true
+        run: dotnet build --no-restore /p:Version=${{ steps.version.outputs.version }}
 
-      - name: Show output file info (if present)
-        if: always()
+      - name: Test
+        run: dotnet test --no-build --logger trx
+
+      - name: Run Pester Tests
         shell: pwsh
         run: |
-          $out = Join-Path $PWD "src/IoTPowerShellAgent/bin/${{ matrix.configuration }}/$($env:TARGET_FRAMEWORK)"
-          Write-Host "Looking for output in: $out"
-          if (Test-Path $out) {
-            Get-ChildItem -Path $out -File -Recurse | ForEach-Object {
-              $sizeMB = [math]::Round($_.Length / 1MB, 2)
-              Write-Host "$($_.FullName) - $sizeMB MB"
-            }
+          if (Test-Path "src\IoTPowerShellAgent.Tests.Pester\run-pester.ps1") {
+            Set-Location src\IoTPowerShellAgent.Tests.Pester
+            .\run-pester.ps1 -OutputFormat NUnitXml -OutputFile PesterResults.xml
+            Set-Location ..\..
           } else {
-            Write-Host "Output directory not found."
+            Write-Host "Pester tests not found, skipping..."
           }
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          name: IoTPowerShellAgent-${{ matrix.configuration }}
-          path: src/IoTPowerShellAgent/bin/${{ matrix.configuration }}/$${{ github.event.inputs.targetFramework }}
+          files: "**/*.trx,**/PesterResults.xml"
