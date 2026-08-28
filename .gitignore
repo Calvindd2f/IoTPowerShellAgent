@@ -44,3 +44,8 @@ TestResults/
 
 # Pester test results
 PesterResults.xml
+backend/README.md
+backend/main.bicepparam
+.gitignore
+backend/New-DpsEnrollment.ps1
+backend/main.bicep
