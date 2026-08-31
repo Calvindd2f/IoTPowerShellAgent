@@ -379,21 +379,18 @@ namespace IoTPowerShellAgent.Installation
             Console.WriteLine("IoT PowerShell Agent Installer");
             Console.WriteLine();
             Console.WriteLine("Usage:");
-            Console.WriteLine("  IoTPowerShellAgent.exe install [orgId]     Install the service");
-            Console.WriteLine("  IoTPowerShellAgent.exe uninstall [orgId]   Uninstall the service");
-            Console.WriteLine("  IoTPowerShellAgent.exe start [orgId]     Start the service");
-            Console.WriteLine("  IoTPowerShellAgent.exe stop [orgId]       Stop the service");
-            Console.WriteLine("  IoTPowerShellAgent.exe status [orgId]     Show service status");
-            Console.WriteLine("  IoTPowerShellAgent.exe update [orgId]    Check for and install updates");
-            Console.WriteLine();
-            Console.WriteLine("If orgId is not specified, it defaults to 'default' or the value");
-            Console.WriteLine("of the IOT_PS_AGENT_ORG_ID environment variable.");
+            Console.WriteLine("  IoTPowerShellAgent.exe install     Install the service");
+            Console.WriteLine("  IoTPowerShellAgent.exe uninstall   Uninstall the service");
+            Console.WriteLine("  IoTPowerShellAgent.exe start       Start the service");
+            Console.WriteLine("  IoTPowerShellAgent.exe stop        Stop the service");
+            Console.WriteLine("  IoTPowerShellAgent.exe status      Show service status");
+            Console.WriteLine("  IoTPowerShellAgent.exe update      Check for and install updates");
             Console.WriteLine();
             Console.WriteLine("Examples:");
-            Console.WriteLine("  IoTPowerShellAgent.exe install myorg");
-            Console.WriteLine("  IoTPowerShellAgent.exe start myorg");
-            Console.WriteLine("  IoTPowerShellAgent.exe status myorg");
-            Console.WriteLine("  IoTPowerShellAgent.exe update myorg");
+            Console.WriteLine("  IoTPowerShellAgent.exe install");
+            Console.WriteLine("  IoTPowerShellAgent.exe start");
+            Console.WriteLine("  IoTPowerShellAgent.exe status");
+            Console.WriteLine("  IoTPowerShellAgent.exe update");
         }
     }
 }

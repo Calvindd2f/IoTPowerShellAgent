@@ -1,4 +1,3 @@
-#nullable disable
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -43,6 +42,7 @@ namespace IoTPowerShellAgent.Utilities
 
             // Default to a configurable repo URL, or use environment variable
             _latestReleaseUrl = githubRepoUrl ??
+                Environment.GetEnvironmentVariable("IOT_PS_AGENT_GITHUB_REPO") ??
                 WindowsApiInterop.GetEnvironmentVariableNative("IOT_PS_AGENT_GITHUB_REPO") ??
                 "https://api.github.com/repos/Calvindd2f/IoTPowerShellAgent/releases/latest";
 

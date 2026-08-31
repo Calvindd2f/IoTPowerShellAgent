@@ -275,6 +275,72 @@ namespace IoTPowerShellAgent.IoT
 
                         }
                     }
+                    
+                    const int compressionThreshold = 1024;
+
+                    if (request.Detached && !string.IsNullOrEmpty(request.ResultEndpoint))
+                    {
+                        // Detached mode: return immediately and run in background
+                        _ = Task.Run(async () =>
+                        {
+                            var detachedExecutor = new IoTPowerShellAgent.PowerShell.PowerShellExecutor(_logCallback);
+                            var detachedResult = await detachedExecutor.ExecutePowerShellAsync(script, request.IsInlinePowershell, cts.Token).ConfigureAwait(false);
+                            
+                            var detachedResponse = new ScriptExecutionResponse
+                            {
+                                Success = detachedResult.Success,
+                                Output = detachedResult.Output,
+                                ErrorMessage = detachedResult.ErrorMessage,
+                                ErrorDetails = detachedResult.ErrorDetails,
+                                IsCompressed = false
+                            };
+                            
+                            if (!string.IsNullOrEmpty(detachedResult.Output) && detachedResult.Output.Length > compressionThreshold)
+                            {
+                                byte[] outputBytes = Encoding.UTF8.GetBytes(detachedResult.Output);
+                                byte[] compressedBytes = CompressGZip(outputBytes);
+
+                                if (compressedBytes.Length < outputBytes.Length)
+                                {
+                                    detachedResponse.Output = Convert.ToBase64String(compressedBytes);
+                                    detachedResponse.IsCompressed = true;
+                                    detachedResponse.OriginalSize = outputBytes.Length;
+                                    detachedResponse.CompressedSize = compressedBytes.Length;
+                                }
+                            }
+                            
+                            try
+                            {
+                                string resultJson = JsonSerializer.Serialize(new {
+                                    jobId = request.JobId,
+                                    deviceId = settings.DeviceId,
+                                    success = detachedResponse.Success,
+                                    errorMessage = detachedResponse.ErrorMessage,
+                                    output = detachedResponse.Output,
+                                    isCompressed = detachedResponse.IsCompressed,
+                                    originalSize = detachedResponse.OriginalSize,
+                                    compressedSize = detachedResponse.CompressedSize
+                                });
+                                
+                                using var http = new System.Net.Http.HttpClient();
+                                using var httpRequest = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Post, request.ResultEndpoint);
+                                httpRequest.Content = new System.Net.Http.StringContent(resultJson, Encoding.UTF8, "application/json");
+                                if (!string.IsNullOrEmpty(request.JobToken))
+                                {
+                                    httpRequest.Headers.TryAddWithoutValidation("x-job-token", request.JobToken);
+                                }
+                                
+                                await http.SendAsync(httpRequest).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                OnLog($"Failed to post detached job result: {ex.Message}", LogOutputType.Error);
+                            }
+                        }, CancellationToken.None);
+
+                        var acceptedResponse = new { accepted = true, message = "Job started in background" };
+                        return new MethodResponse(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(acceptedResponse)), 202);
+                    }
 
                     var executor = new IoTPowerShellAgent.PowerShell.PowerShellExecutor(_logCallback);
 
@@ -282,7 +348,7 @@ namespace IoTPowerShellAgent.IoT
 
 
 
-                    const int compressionThreshold = 1024;
+
                     var response = new ScriptExecutionResponse
                     {
                         Success = result.Success,
@@ -581,6 +647,21 @@ namespace IoTPowerShellAgent.IoT
         public string Script { get; set; } = string.Empty;
         public bool IsInlinePowershell { get; set; } = false;
         public bool IsBase64Encoded { get; set; } = false;
+
+        [System.Text.Json.Serialization.JsonPropertyName("JobId")]
+        public string? JobId { get; set; }
+        
+        [System.Text.Json.Serialization.JsonPropertyName("ResultEndpoint")]
+        public string? ResultEndpoint { get; set; }
+        
+        [System.Text.Json.Serialization.JsonPropertyName("JobToken")]
+        public string? JobToken { get; set; }
+        
+        [System.Text.Json.Serialization.JsonPropertyName("TimeoutSeconds")]
+        public int? TimeoutSeconds { get; set; }
+        
+        [System.Text.Json.Serialization.JsonPropertyName("Detached")]
+        public bool Detached { get; set; } = false;
     }
 
 

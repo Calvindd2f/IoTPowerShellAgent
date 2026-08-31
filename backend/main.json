@@ -282,6 +282,22 @@
       ]
     },
     {
+      "type": "Microsoft.Storage/storageAccounts/tableServices",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', variables('storageName'), 'default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}/{2}', variables('storageName'), 'default', 'jobs')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/tableServices', variables('storageName'), 'default')]"
+      ]
+    },
+    {
       "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
       "apiVersion": "2023-05-01",
       "name": "[format('{0}/{1}/{2}', variables('storageName'), 'default', variables('resultQueue'))]",
@@ -667,6 +683,22 @@
             {
               "name": "WORKFLOW_WEBHOOK_SECRET",
               "value": "[if(empty(parameters('workflowWebhookSecret')), '', format('@Microsoft.KeyVault(SecretUri={0}secrets/workflow-webhook-secret/)', reference(resourceId('Microsoft.KeyVault/vaults', variables('kvName')), '2023-07-01').vaultUri))]"
+            },
+            {
+              "name": "AGENT_SIGNING_SECRET",
+              "value": "[if(empty(parameters('workflowWebhookSecret')), '', format('@Microsoft.KeyVault(SecretUri={0}secrets/workflow-webhook-secret/)', reference(resourceId('Microsoft.KeyVault/vaults', variables('kvName')), '2023-07-01').vaultUri))]"
+            },
+            {
+              "name": "JOBS_TABLE_ENDPOINT",
+              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2023-05-01').primaryEndpoints.table]"
+            },
+            {
+              "name": "JOBS_TABLE_NAME",
+              "value": "jobs"
+            },
+            {
+              "name": "ALLOWED_CALLBACK_HOSTS",
+              "value": ""
             }
           ]
         }

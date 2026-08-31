@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Testing\LocalIoTTester.cs" Condition="'$(Configuration)' == 'Release'" />
+    <Compile Remove="TestHelpers\LocalIoTTester.cs" Condition="'$(Configuration)' == 'Release'" />
   </ItemGroup>
 
 </Project>

@@ -158,9 +158,15 @@ public sealed class RelayFunctions
         }
         catch (Exception ex)
         {
-            entity.Status = "error";
-            entity.ErrorMessage = ex.Message;
-            await _jobs.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, ct);
+            try
+            {
+                entity.Status = "error";
+                entity.ErrorMessage = ex.Message;
+                await _jobs.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, ct);
+            }
+            catch (RequestFailedException rfe) when (rfe.Status == 412)
+            {
+            }
 
             _log.LogError(ex, "Dispatch failed for {DeviceId} job {JobId}", body.DeviceId, jobId);
             // 404/DeviceNotOnline is the common case: direct methods do not queue.
@@ -227,21 +233,38 @@ public sealed class RelayFunctions
 
         if (DateTimeOffset.UtcNow > entity.ExpiresUtc)
         {
-            entity.Status = "expired";
-            await _jobs.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, ct);
+            try
+            {
+                entity.Status = "expired";
+                await _jobs.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, ct);
+            }
+            catch (RequestFailedException ex) when (ex.Status == 412)
+            {
+            }
             return await Problem(req, HttpStatusCode.Gone, "Job expired before the result arrived.");
         }
 
-        var success = root.TryGetProperty("success", out var s) && s.ValueKind == JsonValueKind.True;
+        var success = false;
+        if (root.TryGetProperty("success", out var s))
+        {
+            if (s.ValueKind == JsonValueKind.True) success = true;
+            else if (s.ValueKind == JsonValueKind.String && bool.TryParse(s.GetString(), out var parsedSuccess)) success = parsedSuccess;
+        }
         var errorMessage = root.TryGetProperty("errorMessage", out var em) ? em.GetString() : null;
 
         var forwardStatus = await ForwardToWorkflowAsync(entity.CallbackUrl, doc.RootElement.GetRawText(), ct);
 
-        entity.Status = "completed";
-        entity.Success = success;
-        entity.ErrorMessage = errorMessage;
-        entity.ForwardStatus = forwardStatus;
-        await _jobs.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, ct);
+        try
+        {
+            entity.Status = "completed";
+            entity.Success = success;
+            entity.ErrorMessage = errorMessage;
+            entity.ForwardStatus = forwardStatus;
+            await _jobs.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, ct);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 412)
+        {
+        }
 
         _log.LogInformation("Job {JobId} completed (success={Success}), forward={ForwardStatus}", jobId, success, forwardStatus);
 
@@ -301,12 +324,16 @@ public sealed class RelayFunctions
             reason = "must be an absolute https URL";
             return false;
         }
-        if (_allowedCallbackHosts.Length == 0) return true; // explicitly opted out at deploy time
+        if (_allowedCallbackHosts.Length == 0)
+        {
+            reason = "no allowed hosts configured";
+            return false;
+        }
 
         foreach (var suffix in _allowedCallbackHosts)
         {
             if (uri.Host.Equals(suffix.TrimStart('.'), StringComparison.OrdinalIgnoreCase) ||
-                uri.Host.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                uri.Host.EndsWith("." + suffix.TrimStart('.'), StringComparison.OrdinalIgnoreCase))
                 return true;
         }
         reason = $"host '{uri.Host}' is not on ALLOWED_CALLBACK_HOSTS";

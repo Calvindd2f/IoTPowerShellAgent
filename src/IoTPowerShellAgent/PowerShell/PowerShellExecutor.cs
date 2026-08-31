@@ -28,6 +28,9 @@ namespace IoTPowerShellAgent.PowerShell
         private int _informationLinesProcessed = 0;
         private int _debugLinesProcessed = 0;
 
+        private int _activityLogCounter = 0;
+        private readonly int _activityLogThreshold = 10000;
+
         private static SemaphoreSlim? _executionSemaphore;
         private static readonly object _semaphoreLock = new object();
 
@@ -64,7 +67,11 @@ namespace IoTPowerShellAgent.PowerShell
             if (string.IsNullOrEmpty(logOutput))
                 return;
 
-
+            int count = Interlocked.Increment(ref _activityLogCounter);
+            if (count > _activityLogThreshold)
+            {
+                throw new InvalidOperationException($"Log output exceeded the maximum allowed threshold of {_activityLogThreshold} lines per script execution.");
+            }
 
             _logCallback?.OnLog(logOutput, logtype);
         }
@@ -360,7 +367,6 @@ namespace IoTPowerShellAgent.PowerShell
                                     }
                                 }
                             }
-                            $ErrorActionPreference = 'Continue';
                         ", false);
 
                         preloadPs.Invoke();
@@ -460,7 +466,7 @@ namespace IoTPowerShellAgent.PowerShell
 
 
 
-                if (output.Count == 0)
+                if (output.Count == 0 && !isInlinePowershell)
                 {
 
 
