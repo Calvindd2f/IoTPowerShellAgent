@@ -1,30 +1,3 @@
-Azure IoT Hub
-│
-│ Direct Method
-▼
-┌───────────────────────────┐
-│ IoTPowerShellAgent │
-│ │
-│ C# Windows Service │
-│ │ │
-│ ▼ │
-│ PowerShell SDK Host │
-│ │ │
-│ ▼ │
-│ PowerShell Runspace │
-│ │ │
-│ ▼ │
-│ Script Execution │
-└───────────────────────────┘
-│
-├── Telemetry
-├── Execution results
-└── Device/Module Twin
-
----
-
-> ⚠️ Security: IoTPowerShellAgent executes PowerShell under the Windows Service account. The default installer configures the service as NT AUTHORITY\SYSTEM, meaning remotely submitted scripts can execute with SYSTEM-level privileges. Deployment therefore requires strict control of IoT Hub authentication and authorization.
-
 # IoTPowerShellAgent
 
 **A C# Windows Service for remotely executing PowerShell through Azure IoT Hub.**
@@ -35,7 +8,7 @@ The agent is implemented entirely in C#, using the PowerShell SDK to host and ex
 
 The project is designed for infrastructure and automation scenarios where a persistent Windows execution agent needs to receive work remotely, execute PowerShell locally, and return structured results and telemetry.
 
-> **Security:** The default installer configures the service to run as `NT AUTHORITY\SYSTEM`. Any script submitted to the agent therefore executes with the privileges of the service account. Access to the agent must be treated as privileged remote code execution and protected accordingly.
+> ⚠️ **Security Warning:** The default installer configures the service to run as `NT AUTHORITY\SYSTEM`. Any script submitted to the agent executes with SYSTEM-level privileges. Access to the agent must be treated as privileged remote code execution. See [Security model](#security-model) for deployment recommendations.
 
 ## Architecture
 
@@ -315,32 +288,16 @@ The exact request and response schema is documented in the backend documentation
 
 ## Security model
 
-`IoTPowerShellAgent` provides a privileged remote execution capability. Its security model therefore depends heavily on protecting the communication and authorization boundary around Azure IoT Hub.
+`IoTPowerShellAgent` provides a privileged remote execution capability. By default, the Windows Service runs as `NT AUTHORITY\SYSTEM`. This is intentional for environments requiring privileged local administration, but it means any compromise of the execution boundary could result in SYSTEM-level code execution on the host.
 
-Consider the following deployment requirements:
+Because of this, the agent's security model depends heavily on protecting the communication and authorization boundary around Azure IoT Hub. Consider the following deployment requirements:
 
-- Protect IoT Hub credentials.
-- Restrict which identities can invoke execution.
-- Use device/module authentication appropriate to the deployment.
-- Audit executed scripts.
-- Monitor execution telemetry.
-- Restrict network access where practical.
-- Avoid storing secrets in source control.
-- Use the least-privileged service account possible for the workload.
-
-### SYSTEM execution
-
-The default Windows Service configuration uses:
-
-```text
-NT AUTHORITY\SYSTEM
-```
-
-This is intentional for environments where the agent must perform privileged local administration tasks.
-
-However, this means that compromise of the agent's execution boundary could result in SYSTEM-level code execution on the host.
-
-Deployments that do not require SYSTEM privileges should use a more restricted service identity.
+- **Least Privilege:** Deployments that do not require SYSTEM privileges should configure the Windows Service to use a more restricted service identity.
+- **Access Control:** Strictly restrict which Azure identities can invoke execution (via Direct Methods) on the device.
+- **Credential Protection:** Protect IoT Hub credentials and avoid storing secrets in source control.
+- **Authentication:** Use device or module authentication appropriate to the deployment.
+- **Visibility:** Audit executed scripts and monitor execution telemetry.
+- **Network Hardening:** Restrict network access to the host where practical.
 
 ## Azure backend
 
