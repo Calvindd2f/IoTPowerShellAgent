@@ -72,7 +72,7 @@ namespace IoTPowerShellAgent.PowerShell
 
         public override void SetShouldExit(int exitCode)
         {
-            // Service should handle exit appropriately
+
         }
 
         public override void EnterNestedPrompt()

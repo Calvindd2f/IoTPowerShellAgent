@@ -7,6 +7,13 @@ IoTPowerShellAgent is a PowerShell executor service integrated with Azure IoT Hu
 
 ```
 iot_powershell_agent/
+├── backend/                     # Bicep templates for Azure backend resources
+├── ci/                          # Continuous integration scripts/pipelines
+├── config/                      # Configuration files
+│   └── appsettings.json
+├── docs/                        # Documentation
+│   ├── README.md
+│   └── PROJECT_STRUCTURE.md
 ├── src/
 │   └── IoTPowerShellAgent/              # Main project source code
 │       ├── Core/                # Core domain models and services
@@ -30,12 +37,13 @@ iot_powershell_agent/
 │       │   └── WindowsApiInterop.cs
 │       ├── Program.cs           # Application entry point
 │       └── IoTPowerShellAgent.csproj    # Project file
-├── config/                      # Configuration files
-│   └── appsettings.json
-├── docs/                        # Documentation
-│   ├── README.md
-│   └── PROJECT_STRUCTURE.md
-└── .gitignore                   # Git ignore rules
+├── .github/                     # GitHub Actions workflows
+├── .vscode/                     # VS Code settings
+├── CONTRIBUTING.md              # Contribution guidelines
+├── Directory.Build.props        # Shared build properties
+├── LICENSE                      # Project license
+├── LogicalDiagram.md            # Architecture logical diagram
+└── README.md                    # Root project documentation
 
 ```
 

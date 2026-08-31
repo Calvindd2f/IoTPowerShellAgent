@@ -12,9 +12,9 @@ using IoTPowerShellAgent.PowerShell;
 
 namespace IoTPowerShellAgent.Utilities
 {
-    /// <summary>
-    /// Collects environment metrics
-    /// </summary>
+
+
+
     public class EnvironmentMetricsCollector
     {
         private readonly ILogCallback? _logCallback;
@@ -26,9 +26,9 @@ namespace IoTPowerShellAgent.Utilities
             _executor = new PowerShellExecutor(logCallback);
         }
 
-        /// <summary>
-        /// Gets the AD domain using PowerShell/WMI
-        /// </summary>
+
+
+
         public async Task<string?> GetAdDomainAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -61,9 +61,9 @@ if ($domainInfo -and $domainInfo -ne 'WORKGROUP') {
             return null;
         }
 
-        /// <summary>
-        /// Checks if the machine is an AD domain controller using PowerShell/WMI
-        /// </summary>
+
+
+
         public async Task<bool> GetIsAdDomainControllerAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -94,9 +94,9 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
             return false;
         }
 
-        /// <summary>
-        /// Checks if Entra Connect services are running
-        /// </summary>
+
+
+
         public bool GetIsEntraConnectServer()
         {
             try
@@ -125,9 +125,9 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
             return false;
         }
 
-        /// <summary>
-        /// Gets MAC address from network interfaces
-        /// </summary>
+
+
+
         public string? GetMacAddress()
         {
             try
@@ -139,7 +139,7 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
                     PhysicalAddress? macAddress = iface.GetPhysicalAddress();
                     if (macAddress != null && macAddress.ToString().Length > 0)
                     {
-                        // Replace : with empty string
+
                         string mac = macAddress.ToString().Replace(":", "");
                         _logCallback?.OnLog($"MAC Address: {mac}", LogOutputType.Information);
                         return mac;
@@ -155,9 +155,9 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
             return null;
         }
 
-        /// <summary>
-        /// Gets Entra domain from dsregcmd output
-        /// </summary>
+
+
+
         public async Task<string?> GetEntraDomainAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -186,7 +186,7 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
                 process.Start();
                 process.BeginOutputReadLine();
 
-                // Wait for process to exit (with cancellation support)
+
                 await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 
                 string output = outputBuilder.ToString();
@@ -225,9 +225,9 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
             return null;
         }
 
-        /// <summary>
-        /// Collects all environment metrics and returns them as a dictionary
-        /// </summary>
+
+
+
         public async Task<Dictionary<string, object?>> CollectAllMetricsAsync(CancellationToken cancellationToken = default)
         {
             var metrics = new Dictionary<string, object?>();
@@ -238,7 +238,7 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
                 var isDomainControllerTask = GetIsAdDomainControllerAsync(cancellationToken);
                 var entraDomainTask = GetEntraDomainAsync(cancellationToken);
 
-                // Run PowerShell queries in parallel
+
                 await Task.WhenAll(adDomainTask, isDomainControllerTask, entraDomainTask).ConfigureAwait(false);
 
                 metrics["adDomain"] = await adDomainTask.ConfigureAwait(false);
@@ -257,9 +257,9 @@ if ($domainStatus -eq 4 -or $domainStatus -eq 5) {
             return metrics;
         }
 
-        /// <summary>
-        /// Logs all collected metrics
-        /// </summary>
+
+
+
         public async Task LogAllMetricsAsync(CancellationToken cancellationToken = default)
         {
             var metrics = await CollectAllMetricsAsync(cancellationToken).ConfigureAwait(false);

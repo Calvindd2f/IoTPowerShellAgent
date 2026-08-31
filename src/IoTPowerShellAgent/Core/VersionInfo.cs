@@ -3,14 +3,8 @@ using System.Reflection;
 
 namespace IoTPowerShellAgent.Core
 {
-    /// <summary>
-    /// Provides version information for the application
-    /// </summary>
     public static class VersionInfo
     {
-        /// <summary>
-        /// Gets the current version of the application
-        /// </summary>
         public static string Version
         {
             get
@@ -34,9 +28,6 @@ namespace IoTPowerShellAgent.Core
             }
         }
 
-        /// <summary>
-        /// Gets the assembly version
-        /// </summary>
         public static Version AssemblyVersion
         {
             get

@@ -97,27 +97,27 @@ namespace IoTPowerShellAgent.PowerShell
 
         public override void WriteErrorLine(string value)
         {
-            // Errors are handled through Error stream
+
         }
 
         public override void WriteDebugLine(string message)
         {
-            // Debug messages are handled through Debug stream
+
         }
 
         public override void WriteProgress(long sourceId, ProgressRecord record)
         {
-            // Progress is handled through Progress stream
+
         }
 
         public override void WriteVerboseLine(string message)
         {
-            // Verbose messages are handled through Verbose stream
+
         }
 
         public override void WriteWarningLine(string message)
         {
-            // Warnings are handled through Warning stream
+
         }
 
         public override Dictionary<string, PSObject> Prompt(

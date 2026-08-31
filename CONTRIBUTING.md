@@ -12,7 +12,7 @@ Thank you for your interest in contributing to IoTPowerShellAgent! This document
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/IoTPowerShellAgent.git`
+2. Clone your fork: `git clone https://github.com/Calvindd2f/IoTPowerShellAgent.git`
 3. Create a branch: `git checkout -b feature/your-feature-name`
 4. Make your changes
 5. Test your changes thoroughly
@@ -99,6 +99,7 @@ Use clear, descriptive commit messages:
 - Reference issues/PRs if applicable
 
 Examples:
+
 ```
 Add async execution with cancellation token support
 
@@ -109,6 +110,7 @@ throttling to prevent blocking IoT Hub listener thread.
 ## Versioning
 
 This project uses [Semantic Versioning](https://semver.org/):
+
 - MAJOR version for incompatible API changes
 - MINOR version for backwards-compatible functionality
 - PATCH version for backwards-compatible bug fixes
@@ -116,9 +118,9 @@ This project uses [Semantic Versioning](https://semver.org/):
 ## Questions?
 
 If you have questions, please:
+
 - Open an issue for discussion
 - Check existing issues and discussions
 - Reach out to maintainers
 
 Thank you for contributing!
-

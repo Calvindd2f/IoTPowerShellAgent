@@ -3,9 +3,9 @@ using Newtonsoft.Json;
 
 namespace IoTPowerShellAgent.Utilities
 {
-    /// <summary>
-    /// Context for JSON conversion operations
-    /// </summary>
+
+
+
     public readonly struct ConvertToJsonContext
     {
         public ConvertToJsonContext(int maxDepth, bool enumsAsStrings, bool compressOutput)

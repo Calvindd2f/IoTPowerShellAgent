@@ -12,9 +12,9 @@ using Newtonsoft.Json.Linq;
 
 namespace IoTPowerShellAgent.Utilities
 {
-    /// <summary>
-    /// JSON conversion utilities for PowerShell objects
-    /// </summary>
+
+
+
     public static class JsonObject
     {
         public static object ConvertFromJson(string input, out ErrorRecord error)

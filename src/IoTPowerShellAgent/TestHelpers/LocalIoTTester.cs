@@ -9,9 +9,9 @@ using IoTPowerShellAgent.Utilities;
 
 namespace IoTPowerShellAgent.TestHelpers
 {
-    /// <summary>
-    /// Helper class for local testing of PowerShell execution without IoT Hub
-    /// </summary>
+
+
+
     public class LocalIoTTester
     {
         private readonly TestLogCallback _logCallback;
@@ -21,9 +21,9 @@ namespace IoTPowerShellAgent.TestHelpers
             _logCallback = new TestLogCallback();
         }
 
-        /// <summary>
-        /// Simulates an IoT Hub direct method call locally
-        /// </summary>
+
+
+
         public Task<ScriptExecutionResponse> ExecuteScriptLocally(string script, bool isInlinePowershell = false, bool isBase64Encoded = false)
         {
             Console.WriteLine("=== Local IoT Hub Test Execution ===");
@@ -31,13 +31,13 @@ namespace IoTPowerShellAgent.TestHelpers
             Console.WriteLine($"IsInlinePowershell: {isInlinePowershell}, IsBase64Encoded: {isBase64Encoded}");
             Console.WriteLine();
 
-            // Create a new executor with a capturing log callback for this execution
+
             var capturingCallback = new CapturingLogCallback();
             var executor = new PowerShellExecutor(capturingCallback);
 
             try
             {
-                // Handle base64 decoding if needed
+
                 string decodedScript = script;
                 if (isBase64Encoded || IsBase64String(script))
                 {
@@ -56,10 +56,10 @@ namespace IoTPowerShellAgent.TestHelpers
                 Console.WriteLine($"Executing script...");
                 var result = executor.ExecutePowerShell(decodedScript, isInlinePowershell);
 
-                // Combine pipeline output with captured log output (for host-output commands like Format-Table)
+
                 string combinedOutput = result.Output;
                 string capturedOutput = capturingCallback.GetCapturedOutput();
-                
+
                 if (!string.IsNullOrEmpty(capturedOutput))
                 {
                     if (!string.IsNullOrEmpty(combinedOutput))
@@ -111,9 +111,9 @@ namespace IoTPowerShellAgent.TestHelpers
             }
         }
 
-        /// <summary>
-        /// Tests with a sample PowerShell script
-        /// </summary>
+
+
+
         public Task TestWithSampleScript()
         {
             Console.WriteLine("\n=== Testing with Sample Script ===");
@@ -122,9 +122,9 @@ namespace IoTPowerShellAgent.TestHelpers
             return ExecuteScriptLocally(sampleScript, isInlinePowershell: false);
         }
 
-        /// <summary>
-        /// Tests with a base64 encoded script
-        /// </summary>
+
+
+
         public Task TestWithBase64Script()
         {
             Console.WriteLine("\n=== Testing with Base64 Encoded Script ===");
@@ -134,9 +134,9 @@ namespace IoTPowerShellAgent.TestHelpers
             return ExecuteScriptLocally(base64Script, isInlinePowershell: false, isBase64Encoded: true);
         }
 
-        /// <summary>
-        /// Tests environment metrics collection
-        /// </summary>
+
+
+
         public async Task TestEnvironmentMetrics()
         {
             Console.WriteLine("\n=== Testing Environment Metrics Collection ===");
@@ -200,27 +200,27 @@ namespace IoTPowerShellAgent.TestHelpers
             }
         }
 
-        /// <summary>
-        /// Log callback that captures output for commands that output to host (like Format-Table)
-        /// </summary>
+
+
+
         private class CapturingLogCallback : ILogCallback
         {
             private readonly StringBuilder _outputBuilder = new StringBuilder();
 
             public void OnLog(string message, LogOutputType logType)
             {
-                // Capture Information, Debug, Verbose, and Warning output
-                // Format-Table outputs to Information stream
-                // Debug messages help troubleshoot serialization issues
-                if (logType == LogOutputType.Information || 
-                    logType == LogOutputType.Verbose || 
+
+
+
+                if (logType == LogOutputType.Information ||
+                    logType == LogOutputType.Verbose ||
                     logType == LogOutputType.Debug)
                 {
                     if (_outputBuilder.Length > 0)
                     {
                         _outputBuilder.AppendLine();
                     }
-                    // Prefix debug messages for clarity
+
                     if (logType == LogOutputType.Debug)
                     {
                         _outputBuilder.Append($"[DEBUG] {message}");
@@ -232,7 +232,7 @@ namespace IoTPowerShellAgent.TestHelpers
                 }
                 else if (logType == LogOutputType.Warning)
                 {
-                    // Include warnings but mark them
+
                     if (_outputBuilder.Length > 0)
                     {
                         _outputBuilder.AppendLine();

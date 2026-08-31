@@ -1,0 +1,55 @@
+name: Build & Test (Dev)
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for semantic versioning
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Determine version from Git tag
+        id: version
+        run: |
+          $tag = git describe --tags --abbrev=0 2>$null
+          if ($tag) {
+            $version = $tag -replace '^v', ''
+            Write-Host "Version from tag: $version"
+            echo "version=$version" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "No tag found, using default version"
+            echo "version=1.0.0" >> $env:GITHUB_OUTPUT
+          }
+        shell: pwsh
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Debug /p:Version=${{ steps.version.outputs.version }}
+
+      - name: Test
+        run: dotnet test --no-build --configuration Debug --logger trx
+
+      - name: Run Pester Tests
+        shell: pwsh
+        run: |
+          if (Test-Path "src\IoTPowerShellAgent.Tests.Pester\run-pester.ps1") {
+            Set-Location src\IoTPowerShellAgent.Tests.Pester
+            .\run-pester.ps1 -OutputFormat NUnitXml -OutputFile PesterResults.xml
+            Set-Location ..\..
+          } else {
+            Write-Host "Pester tests not found, skipping..."
+          }
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "**/*.trx,**/PesterResults.xml"

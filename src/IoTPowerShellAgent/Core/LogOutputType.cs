@@ -1,8 +1,5 @@
 namespace IoTPowerShellAgent.Core
 {
-    /// <summary>
-    /// Represents the type of log output from PowerShell execution
-    /// </summary>
     public enum LogOutputType
     {
         Error = 1,

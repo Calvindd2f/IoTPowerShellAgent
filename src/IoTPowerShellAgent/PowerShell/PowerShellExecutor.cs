@@ -16,9 +16,9 @@ using System.Linq;
 
 namespace IoTPowerShellAgent.PowerShell
 {
-    /// <summary>
-    /// Executes PowerShell scripts and handles output streaming
-    /// </summary>
+
+
+
     public class PowerShellExecutor : IPowerShellExecutor
     {
         private readonly ILogCallback? _logCallback;
@@ -27,25 +27,22 @@ namespace IoTPowerShellAgent.PowerShell
         private int _errorLinesProcessed = 0;
         private int _informationLinesProcessed = 0;
         private int _debugLinesProcessed = 0;
-        private int _activityLogCounter = 0;
-        private readonly int _activityLogThreshold;
+
         private static SemaphoreSlim? _executionSemaphore;
         private static readonly object _semaphoreLock = new object();
 
         public PowerShellExecutor(ILogCallback? logCallback = null)
         {
-            _activityLogCounter = 0;
             _logCallback = logCallback;
             var settings = SettingsService.Instance.Settings;
-            _activityLogThreshold = settings.ActivityLogThreshold;
 
-            // Initialize semaphore if not already initialized
-            InitializeSemaphore(settings.MaxConcurrentRunspaces);
+
+        InitializeSemaphore(settings.MaxConcurrentRunspaces);
         }
 
-        /// <summary>
-        /// Initializes the execution semaphore for throttling concurrent runspaces
-        /// </summary>
+
+
+
         private static void InitializeSemaphore(int maxConcurrent)
         {
             if (_executionSemaphore == null)
@@ -54,7 +51,7 @@ namespace IoTPowerShellAgent.PowerShell
                 {
                     if (_executionSemaphore == null)
                     {
-                        // Ensure minimum of 1 and reasonable maximum
+
                         int semaphoreCount = Math.Max(1, Math.Min(maxConcurrent, 10));
                         _executionSemaphore = new SemaphoreSlim(semaphoreCount, semaphoreCount);
                     }
@@ -67,11 +64,7 @@ namespace IoTPowerShellAgent.PowerShell
             if (string.IsNullOrEmpty(logOutput))
                 return;
 
-            if (_activityLogCounter > _activityLogThreshold)
-            {
-                throw new Exception("Activity Log threshold exceeded.");
-            }
-            ++_activityLogCounter;
+
 
             _logCallback?.OnLog(logOutput, logtype);
         }
@@ -213,7 +206,7 @@ namespace IoTPowerShellAgent.PowerShell
             ps.Streams.Error.DataAdded += Error_DataAdded;
             ps.Streams.Progress.DataAdded += Progress_DataAdded;
 
-            // Try to bind Information stream if available (PowerShell 5.0+)
+
             try
             {
                 PropertyInfo property = ps.Streams.GetType().GetProperty("Information");
@@ -240,7 +233,7 @@ namespace IoTPowerShellAgent.PowerShell
             }
             catch
             {
-                // Fallback to host information if Information stream is not available
+
                 host.OnInformation += Host_OnInformation;
             }
 
@@ -248,48 +241,48 @@ namespace IoTPowerShellAgent.PowerShell
             ps.Streams.Warning.DataAdded += Warning_DataAdded;
         }
 
-        /// <summary>
-        /// Executes PowerShell script asynchronously with cancellation token support and semaphore throttling
-        /// </summary>
+
+
+
         public async Task<PowerShellExecutionResult> ExecutePowerShellAsync(string script, bool isInlinePowershell, CancellationToken cancellationToken = default)
         {
-            // Ensure semaphore is initialized
+
             if (_executionSemaphore == null)
             {
                 var settings = SettingsService.Instance.Settings;
                 InitializeSemaphore(settings.MaxConcurrentRunspaces);
             }
 
-            // Wait for semaphore slot (throttles concurrent executions)
+
             await _executionSemaphore!.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             try
             {
-                // Execute the synchronous PowerShell invocation in a background task
-                // This prevents blocking the IoT Hub listener thread
+
+
                 return await Task.Run(() => ExecutePowerShellInternal(script, isInlinePowershell, cancellationToken), cancellationToken).ConfigureAwait(false);
             }
             finally
             {
-                // Always release semaphore slot
+
                 _executionSemaphore.Release();
             }
         }
 
-        /// <summary>
-        /// Executes PowerShell script synchronously (kept for backward compatibility)
-        /// For new code, prefer ExecutePowerShellAsync
-        /// </summary>
+
+
+
+
         public PowerShellExecutionResult ExecutePowerShell(string script, bool isInlinePowershell)
         {
-            // For backward compatibility, call async version synchronously
-            // Note: This will still block, but allows gradual migration
+
+
             return ExecutePowerShellAsync(script, isInlinePowershell, CancellationToken.None).GetAwaiter().GetResult();
         }
 
-        /// <summary>
-        /// Internal method that performs the actual PowerShell execution
-        /// </summary>
+
+
+
         private PowerShellExecutionResult ExecutePowerShellInternal(string script, bool isInlinePowershell, CancellationToken cancellationToken)
         {
             PowerShellExecutionResult result = new PowerShellExecutionResult();
@@ -304,15 +297,13 @@ namespace IoTPowerShellAgent.PowerShell
                     throw new ArgumentException("Script cannot be null or empty", nameof(script));
                 }
 
-                // Check for cancellation before starting
+
                 cancellationToken.ThrowIfCancellationRequested();
 
                 SettingsService settingsService = SettingsService.Instance;
-                bool isActivityNode = settingsService.GetIsActivityNode();
-
                 DefaultHost defaultHost = new DefaultHost(CultureInfo.CurrentCulture, CultureInfo.CurrentUICulture);
-                // In PowerShell 7, CreateDefault() may try to load snap-ins which can fail
-                // Use CreateDefault2() which creates a minimal session state without snap-ins
+
+
                 InitialSessionState initialSessionState = InitialSessionState.CreateDefault2();
 
                 runspace = RunspaceFactory.CreateRunspace(defaultHost, initialSessionState);
@@ -322,18 +313,18 @@ namespace IoTPowerShellAgent.PowerShell
                 powerShell.Runspace = runspace;
                 this.BindEvents(powerShell, defaultHost);
 
-                // Pre-load core PowerShell modules to avoid PSSnapIn compatibility issues
-                // We need to load modules before the script runs to catch any loading errors early
+
+
                 try
                 {
-                    // Use using statement to ensure PowerShell instance is always disposed
-                    // even if SendLog() throws an exception during error processing
+
+
                     using (var preloadPs = System.Management.Automation.PowerShell.Create())
                     {
                         preloadPs.Runspace = runspace;
 
-                        // Create a script that pre-loads commonly used modules
-                        // This uses direct module path access to bypass auto-loading issues
+
+
                         preloadPs.AddScript(@"
                             $ErrorActionPreference = 'SilentlyContinue';
                             # Try to pre-load core modules using their full paths
@@ -374,29 +365,29 @@ namespace IoTPowerShellAgent.PowerShell
                         preloadPs.Invoke();
                         var preloadErrors = preloadPs.Streams.Error;
 
-                        // Log any errors but don't fail - modules might still auto-load on demand
-                        // Note: SendLog() could throw, but using statement ensures preloadPs is disposed
+
+
                         foreach (var error in preloadErrors)
                         {
                             if (error.Exception != null)
                             {
                                 var errorMsg = error.Exception.Message;
-                                // Suppress PSSnapIn errors as they're expected in some configurations
+
                                 if (!errorMsg.Contains("PSSnapIn") && !errorMsg.Contains("Could not load type"))
                                 {
                                     SendLog($"Module preload warning: {errorMsg}", LogOutputType.Warning);
                                 }
                             }
                         }
-                    } // preloadPs.Dispose() called here automatically
+                    }
                 }
                 catch (Exception ex)
                 {
-                    // Non-fatal - continue execution as modules may still work
+
                     SendLog($"Module preload exception (non-fatal): {ex.Message}", LogOutputType.Warning);
                 }
 
-                // Check for cancellation before adding script
+
                 cancellationToken.ThrowIfCancellationRequested();
 
                 powerShell.AddScript(script, false);
@@ -404,15 +395,15 @@ namespace IoTPowerShellAgent.PowerShell
                 PSInvocationSettings psinvocationSettings = new PSInvocationSettings();
                 psinvocationSettings.Host = defaultHost;
 
-                // Invoke synchronously - this is wrapped in Task.Run by the caller
-                // Note: PowerShell.Invoke() doesn't support cancellation directly, but Task.Run allows
-                // the cancellation token to be checked before/after invocation
+
+
+
                 Collection<PSObject> output = powerShell.Invoke();
 
-                // Check for cancellation after invocation
+
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // Debug: Log output count for troubleshooting
+
                 if (output.Count == 0)
                 {
                     SendLog($"PowerShell output collection is empty (Count=0). Output may be going to host streams.", LogOutputType.Debug);
@@ -422,22 +413,22 @@ namespace IoTPowerShellAgent.PowerShell
                     SendLog($"PowerShell output collection has {output.Count} object(s)", LogOutputType.Debug);
                 }
 
-                // Check for errors - collect all error messages with full exception details
+
                 if (powerShell.Streams.Error.Count > 0)
                 {
                     var errorDetailsList = new List<PowerShellErrorDetails>();
                     StringBuilder errorBuilder = new StringBuilder();
-                    
+
                     foreach (ErrorRecord error in powerShell.Streams.Error)
                     {
-                        // Create structured error details with full exception information
+
                         var errorDetails = PowerShellErrorDetails.FromErrorRecord(error);
                         errorDetailsList.Add(errorDetails);
 
-                        // Build human-readable error message
+
                         string errorMsg = error.Exception?.Message ?? error.ToString();
-                        
-                        // Check if this is a command not found error (module not loaded)
+
+
                         if (errorMsg.Contains("is not recognized") ||
                             errorMsg.Contains("was not found") ||
                             errorMsg.Contains("could not be loaded"))
@@ -449,7 +440,7 @@ namespace IoTPowerShellAgent.PowerShell
                             errorBuilder.AppendLine(errorMsg);
                         }
 
-                        // Include inner exception messages in the summary
+
                         var innerException = error.Exception?.InnerException;
                         int innerDepth = 0;
                         while (innerException != null && innerDepth < 5)
@@ -459,37 +450,37 @@ namespace IoTPowerShellAgent.PowerShell
                             innerDepth++;
                         }
                     }
-                    
+
                     result.ErrorMessage = errorBuilder.ToString();
                     result.ErrorDetails = errorDetailsList;
                     result.Success = false;
                 }
 
-                // Result validation and processing
-                // Note: Some commands like Format-Table output to host, not pipeline
-                // So empty output is not always an error
-                if (output.Count == 0 && (!isActivityNode || !isInlinePowershell))
+
+
+
+                if (output.Count == 0)
                 {
-                    // Only fail if there are actual errors
-                    // Empty output is acceptable for commands that output to host
+
+
                     if (!string.IsNullOrEmpty(result.ErrorMessage))
                     {
-                        // There are errors, so the execution failed
+
                         result.Success = false;
                     }
                     else
                     {
-                        // No errors and no output - this is acceptable for host-output commands
+
                         result.Success = true;
                         result.Output = string.Empty;
                     }
                 }
 
-                // Handle multiple output objects by collecting them into an array
+
                 object? outputToSerialize = null;
                 if (output.Count > 1)
                 {
-                    // Multiple objects - serialize as array
+
                     var outputArray = new object[output.Count];
                     for (int i = 0; i < output.Count; i++)
                     {
@@ -497,18 +488,18 @@ namespace IoTPowerShellAgent.PowerShell
                     }
                     outputToSerialize = outputArray;
                     result.RawOutput = outputArray;
-                    
-                    // Debug: Log array serialization
+
+
                     SendLog($"Serializing array of {output.Count} objects, first object type: {outputArray[0]?.GetType().FullName ?? "null"}", LogOutputType.Debug);
                 }
                 else if (output.Count == 1)
                 {
-                    // Single object
+
                     psobject2 = output[0];
                     result.RawOutput = psobject2;
                     outputToSerialize = psobject2.BaseObject ?? psobject2;
-                    
-                    // Debug: Log the type being serialized
+
+
                     if (outputToSerialize != null)
                     {
                         SendLog($"Serializing single object of type: {outputToSerialize.GetType().FullName}, IsComplex: {IsComplexObject(outputToSerialize)}", LogOutputType.Debug);
@@ -519,21 +510,21 @@ namespace IoTPowerShellAgent.PowerShell
                 {
                     try
                     {
-                        // For complex objects (arrays, collections, objects with properties), serialize to JSON
-                        // For simple types (strings, numbers, dates), use ToString()
+
+
                         if (IsComplexObject(outputToSerialize))
                         {
-                            // Serialize complex objects to compressed JSON for efficient transmission
+
                             var context = new ConvertToJsonContext(
                                 maxDepth: 1024,
                                 enumsAsStrings: true,
-                                compressOutput: true); // Compress JSON (no indentation) for smaller payload
+                                compressOutput: true);
                             string jsonOutput = JsonObject.ConvertToJson(outputToSerialize, context);
                             result.Output = !string.IsNullOrEmpty(jsonOutput) ? jsonOutput : string.Empty;
                         }
                         else
                         {
-                            // Use ToString() for simple types (DateTime, string, numbers, etc.)
+
                             string stringOutput = outputToSerialize.ToString();
                             result.Output = !string.IsNullOrEmpty(stringOutput) ? stringOutput : string.Empty;
                         }
@@ -541,7 +532,7 @@ namespace IoTPowerShellAgent.PowerShell
                     }
                     catch (Exception jsonEx)
                     {
-                        // If JSON serialization fails, fall back to ToString()
+
                         SendLog($"JSON serialization failed, using ToString(): {jsonEx.Message}", LogOutputType.Warning);
                         try
                         {
@@ -566,20 +557,20 @@ namespace IoTPowerShellAgent.PowerShell
                 result.Success = false;
                 result.ErrorMessage = "Script execution was cancelled.";
                 SendLog("Script execution was cancelled.", LogOutputType.Warning);
-                throw; // Re-throw to propagate cancellation
+                throw;
             }
             catch (Exception ex)
             {
                 result.Success = false;
                 result.Exception = ex;
                 result.ErrorMessage = ex.ToString();
-                
-                // Capture structured error details including inner exceptions
+
+
                 result.ErrorDetails = new List<PowerShellErrorDetails>
                 {
                     PowerShellErrorDetails.FromException(ex)
                 };
-                
+
                 SendLog(ex.ToString(), LogOutputType.Error);
             }
             finally
@@ -602,11 +593,11 @@ namespace IoTPowerShellAgent.PowerShell
             return result;
         }
 
-        /// <summary>
-        /// Determines if an object is complex and should be serialized to JSON
-        /// Simple types (strings, numbers, dates, booleans) return false
-        /// Complex types (arrays, collections, objects with properties) return true
-        /// </summary>
+
+
+
+
+
         private static bool IsComplexObject(object obj)
         {
             if (obj == null)
@@ -614,10 +605,10 @@ namespace IoTPowerShellAgent.PowerShell
 
             Type type = obj.GetType();
 
-            // Simple types that should use ToString()
-            if (type.IsPrimitive || 
-                type == typeof(string) || 
-                type == typeof(DateTime) || 
+
+            if (type.IsPrimitive ||
+                type == typeof(string) ||
+                type == typeof(DateTime) ||
                 type == typeof(DateTimeOffset) ||
                 type == typeof(TimeSpan) ||
                 type == typeof(Guid) ||
@@ -627,16 +618,16 @@ namespace IoTPowerShellAgent.PowerShell
                 return false;
             }
 
-            // Arrays and collections are complex
+
             if (obj is IEnumerable && !(obj is string))
             {
                 return true;
             }
 
-            // Objects with properties are complex (but not simple value types)
+
             if (type.IsClass && type != typeof(object))
             {
-                // Check if it has properties beyond the base object
+
                 var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                 if (properties.Length > 0)
                 {
@@ -644,16 +635,16 @@ namespace IoTPowerShellAgent.PowerShell
                 }
             }
 
-            // PSObject wrappers are complex if they have properties
+
             if (obj is PSObject psObj)
             {
                 var properties = psObj.Properties;
                 if (properties != null)
                 {
-                    // Check if collection has any items by iterating
+
                     foreach (var prop in properties)
                     {
-                        return true; // Has at least one property, so it's complex
+                        return true;
                     }
                 }
             }
@@ -663,22 +654,22 @@ namespace IoTPowerShellAgent.PowerShell
 
         public void Dispose()
         {
-            // Cleanup if needed
+
             if (_logCallback is IDisposable disposable)
             {
                 disposable.Dispose();
             }
             GC.SuppressFinalize(this);
-            // Note: Do not call GC.Collect() - let the GC manage itself
-            // Calling GC.Collect() can cause performance issues and is an anti-pattern
+
+
         }
     }
 
-    /// <summary>
-    /// Interface for logging callbacks
-    /// </summary>
+
+
+
     public interface ILogCallback
-    {
-        void OnLog(string message, LogOutputType logType);
-    }
+{
+    void OnLog(string message, LogOutputType logType);
+}
 }

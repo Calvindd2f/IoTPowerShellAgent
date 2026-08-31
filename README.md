@@ -12,6 +12,10 @@ A Windows Service for executing PowerShell scripts remotely via Azure IoT Hub. T
 - **Performance Monitoring**: Process and system performance tracking using P/Invoke
 - **Activity Node Support**: Configurable activity node mode for workflow integration
 
+## Azure Infrastructure
+
+The complete Azure backend infrastructure (IoT Hub, Storage, Event Grid, Function App, etc.) can be deployed via the Bicep templates located in the `backend/` directory. See the [Backend Documentation](backend/README.md) for deployment instructions and architectural details.
+
 ## Project Structure
 
 The project is organized into a clean, modular structure:
@@ -42,9 +46,6 @@ See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed structure informat
 {
   "IoTHubConnectionString": "HostName=your-iothub.azure-devices.net;DeviceId=your-device-id;SharedAccessKey=your-key",
   "DeviceId": "your-device-id",
-  "ModuleId": "",
-  "IsActivityNode": false,
-  "ActivityLogThreshold": 1000,
   "ScriptTimeoutSeconds": 300
 }
 ```
@@ -185,7 +186,6 @@ $result = Get-Process | Select-Object Name, CPU
 - **Service won't start**: Check Event Viewer for errors
 - **IoT Hub connection fails**: Verify connection string and network connectivity
 - **Scripts timeout**: Adjust `ScriptTimeoutSeconds` in configuration
-- **High memory usage**: Monitor via telemetry and adjust `ActivityLogThreshold`
 
 ## License
 

@@ -11,9 +11,7 @@ using IoTPowerShellAgent.Utilities;
 
 namespace IoTPowerShellAgent.Installation
 {
-    /// <summary>
-    /// Standalone installer program for the Windows Service
-    /// </summary>
+
     public class InstallerProgram
     {
         public static int RunInstaller(string[] args)
@@ -25,24 +23,24 @@ namespace IoTPowerShellAgent.Installation
             }
 
             string command = args[0].ToLowerInvariant();
-            string orgId = args.Length > 1 ? args[1] : GetDefaultOrgId();
+            
 
             try
             {
                 switch (command)
                 {
                     case "install":
-                        return InstallService(orgId);
+                        return InstallService();
                     case "uninstall":
-                        return UninstallService(orgId);
+                        return UninstallService();
                     case "start":
-                        return StartService(orgId);
+                        return StartService();
                     case "stop":
-                        return StopService(orgId);
+                        return StopService();
                     case "status":
-                        return GetServiceStatus(orgId);
+                        return GetServiceStatus();
                     case "update":
-                        return CheckForUpdates(orgId);
+                        return CheckForUpdates();
                     default:
                         Console.WriteLine($"Unknown command: {command}");
                         PrintUsage();
@@ -56,24 +54,16 @@ namespace IoTPowerShellAgent.Installation
             }
         }
 
-        private static string GetDefaultOrgId()
-        {
-            // Use native Windows API for better performance
-            string? envOrgId = WindowsApiInterop.GetEnvironmentVariableNative("IOT_PS_AGENT_ORG_ID") ??
-                            Environment.GetEnvironmentVariable("IOT_PS_AGENT_ORG_ID");
-            return !string.IsNullOrEmpty(envOrgId) ? envOrgId : "default";
-        }
+        
 
-        private static int InstallService(string orgId)
+        private static int InstallService()
         {
-            Console.WriteLine($"Installing IoT PowerShell Agent service for organization: {orgId}");
+            Console.WriteLine("Installing IoT PowerShell Agent service");
 
-            // Create directories
             Console.WriteLine("Creating installation directories...");
-            InstallationPaths.CreateDirectories(orgId);
+            InstallationPaths.CreateDirectories();
 
-            // Copy executable if needed
-            string targetExe = InstallationPaths.GetAgentExecutablePath(orgId);
+            string targetExe = InstallationPaths.GetAgentExecutablePath();
             string sourceExe = Assembly.GetExecutingAssembly().Location;
 
             if (!File.Exists(targetExe) || !AreFilesSame(sourceExe, targetExe))
@@ -82,8 +72,7 @@ namespace IoTPowerShellAgent.Installation
                 File.Copy(sourceExe, targetExe, true);
             }
 
-            // Copy configuration file if it doesn't exist
-            string configPath = InstallationPaths.GetConfigFilePath(orgId);
+            string configPath = InstallationPaths.GetConfigFilePath();
             if (!File.Exists(configPath))
             {
                 string sourceConfig = Path.Combine(
@@ -103,12 +92,10 @@ namespace IoTPowerShellAgent.Installation
                 }
             }
 
-            // Install service using sc.exe
             Console.WriteLine("Installing Windows Service...");
-            string serviceName = InstallationPaths.GetServiceName(orgId);
+            string serviceName = InstallationPaths.GetServiceName();
 
-            // Use sc.exe to create the service
-            string scArgs = $"create \"{serviceName}\" binPath= \"{targetExe}\" start= auto DisplayName= \"IoT PowerShell Agent - {orgId}\"";
+            string scArgs = $"create \"{serviceName}\" binPath= \"{targetExe}\" start= auto DisplayName= \"IoT PowerShell Agent\"";
             int exitCode = RunCommand("sc.exe", scArgs);
 
             if (exitCode != 0)
@@ -116,8 +103,6 @@ namespace IoTPowerShellAgent.Installation
                 throw new Exception($"Failed to install service. sc.exe returned exit code {exitCode}");
             }
 
-            // Configure service to run as NT AUTHORITY\SYSTEM
-            // This ensures PowerShell scripts execute with SYSTEM privileges
             Console.WriteLine("Configuring service to run as NT AUTHORITY\\SYSTEM...");
             string configArgs = $"config \"{serviceName}\" obj= \"NT AUTHORITY\\SYSTEM\"";
             exitCode = RunCommand("sc.exe", configArgs);
@@ -132,26 +117,24 @@ namespace IoTPowerShellAgent.Installation
                 Console.WriteLine("Service configured to run as NT AUTHORITY\\SYSTEM successfully.");
             }
 
-            // Set service description
             string descArgs = $"description \"{serviceName}\" \"Azure IoT Hub PowerShell execution agent service\"";
             RunCommand("sc.exe", descArgs);
 
             Console.WriteLine($"Service '{serviceName}' installed successfully.");
             Console.WriteLine($"Configuration file: {configPath}");
-            Console.WriteLine($"Log file: {InstallationPaths.GetLogFilePath(orgId)}");
+            Console.WriteLine($"Log file: {InstallationPaths.GetLogFilePath()}");
             Console.WriteLine("\nNote: Please update the configuration file with your IoT Hub connection string before starting the service.");
 
             return 0;
         }
 
-        private static int UninstallService(string orgId)
+        private static int UninstallService()
         {
-            Console.WriteLine($"Uninstalling IoT PowerShell Agent service for organization: {orgId}");
+            Console.WriteLine("Uninstalling IoT PowerShell Agent service");
 
-            string serviceName = InstallationPaths.GetServiceName(orgId);
-            string targetExe = InstallationPaths.GetAgentExecutablePath(orgId);
+            string serviceName = InstallationPaths.GetServiceName();
+            string targetExe = InstallationPaths.GetAgentExecutablePath();
 
-            // Stop service if running
             try
             {
                 using (var service = new ServiceController(serviceName))
@@ -169,7 +152,6 @@ namespace IoTPowerShellAgent.Installation
                 Console.WriteLine($"Warning: Could not stop service: {ex.Message}");
             }
 
-            // Uninstall service using sc.exe
             Console.WriteLine("Uninstalling Windows Service...");
             string deleteArgs = $"delete \"{serviceName}\"";
             int exitCode = RunCommand("sc.exe", deleteArgs);
@@ -184,9 +166,9 @@ namespace IoTPowerShellAgent.Installation
             return 0;
         }
 
-        private static int StartService(string orgId)
+        private static int StartService()
         {
-            string serviceName = InstallationPaths.GetServiceName(orgId);
+            string serviceName = InstallationPaths.GetServiceName();
 
             using (var service = new ServiceController(serviceName))
             {
@@ -205,9 +187,9 @@ namespace IoTPowerShellAgent.Installation
             return 0;
         }
 
-        private static int StopService(string orgId)
+        private static int StopService()
         {
-            string serviceName = InstallationPaths.GetServiceName(orgId);
+            string serviceName = InstallationPaths.GetServiceName();
 
             using (var service = new ServiceController(serviceName))
             {
@@ -226,9 +208,9 @@ namespace IoTPowerShellAgent.Installation
             return 0;
         }
 
-        private static int GetServiceStatus(string orgId)
+        private static int GetServiceStatus()
         {
-            string serviceName = InstallationPaths.GetServiceName(orgId);
+            string serviceName = InstallationPaths.GetServiceName();
 
             try
             {
@@ -238,11 +220,10 @@ namespace IoTPowerShellAgent.Installation
                     Console.WriteLine($"Service Name: {serviceName}");
                     Console.WriteLine($"Status: {service.Status}");
                     Console.WriteLine($"Display Name: {service.DisplayName}");
-                    Console.WriteLine($"Executable Path: {InstallationPaths.GetAgentExecutablePath(orgId)}");
-                    Console.WriteLine($"Config Path: {InstallationPaths.GetConfigFilePath(orgId)}");
-                    Console.WriteLine($"Log Path: {InstallationPaths.GetLogFilePath(orgId)}");
+                    Console.WriteLine($"Executable Path: {InstallationPaths.GetAgentExecutablePath()}");
+                    Console.WriteLine($"Config Path: {InstallationPaths.GetConfigFilePath()}");
+                    Console.WriteLine($"Log Path: {InstallationPaths.GetLogFilePath()}");
 
-                    // Get service account information using sc.exe
                     Console.WriteLine("\nService Account Information:");
                     string qcArgs = $"qc \"{serviceName}\"";
                     var processStartInfo = new ProcessStartInfo
@@ -262,14 +243,13 @@ namespace IoTPowerShellAgent.Installation
                             string output = process.StandardOutput.ReadToEnd();
                             process.WaitForExit();
 
-                            // Parse the output to find the SERVICE_START_NAME (account)
                             var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                             foreach (var line in lines)
                             {
                                 if (line.Contains("SERVICE_START_NAME", StringComparison.OrdinalIgnoreCase))
                                 {
                                     Console.WriteLine($"  {line.Trim()}");
-                                    // Check if it's running as SYSTEM
+
                                     if (line.Contains("NT AUTHORITY\\SYSTEM", StringComparison.OrdinalIgnoreCase))
                                     {
                                         Console.WriteLine("  ✓ PowerShell scripts will execute as NT AUTHORITY\\SYSTEM");
@@ -313,8 +293,6 @@ namespace IoTPowerShellAgent.Installation
                 IoTHubConnectionString = "",
                 DeviceId = "",
                 ModuleId = "",
-                IsActivityNode = false,
-                ActivityLogThreshold = 1000,
                 ScriptTimeoutSeconds = 300
             };
 
@@ -360,9 +338,9 @@ namespace IoTPowerShellAgent.Installation
             }
         }
 
-        private static int CheckForUpdates(string orgId)
+        private static int CheckForUpdates()
         {
-            Console.WriteLine($"Checking for updates (Organization: {orgId})...");
+            Console.WriteLine("Checking for updates...");
             Console.WriteLine($"Current version: {Core.VersionInfo.Version}");
 
             try
@@ -371,7 +349,7 @@ namespace IoTPowerShellAgent.Installation
                 var updateInterval = TimeSpan.FromHours(settings.AutoUpdateIntervalHours);
 
                 using (var updater = new AutoUpdater(
-                    null, // No logging callback for command-line
+                    null,
                     settings.GitHubReleaseUrl,
                     enabled: true,
                     updateInterval: updateInterval))
@@ -419,3 +397,4 @@ namespace IoTPowerShellAgent.Installation
         }
     }
 }
+

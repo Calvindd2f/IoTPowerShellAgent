@@ -43,7 +43,6 @@ namespace IoTPowerShellAgent.Utilities
             // Default to a configurable repo URL, or use environment variable
             _latestReleaseUrl = githubRepoUrl ??
                 WindowsApiInterop.GetEnvironmentVariableNative("IOT_PS_AGENT_GITHUB_REPO") ??
-                Environment.GetEnvironmentVariable("IOT_PS_AGENT_GITHUB_REPO") ??
                 "https://api.github.com/repos/Calvindd2f/IoTPowerShellAgent/releases/latest";
 
             // Use IHttpClientFactory for proper lifecycle management
@@ -203,15 +202,12 @@ namespace IoTPowerShellAgent.Utilities
                     return false;
                 }
 
-                // Get organization ID from environment or settings
-                string orgId = ServiceInstallerHelper.GetOrgIdFromContext();
-
                 // Execute the update installer
                 // The installer should handle stopping the service, updating files, and restarting
                 var processStartInfo = new ProcessStartInfo
                 {
                     FileName = tempFile,
-                    Arguments = $"install {orgId}",
+                    Arguments = "install",
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };

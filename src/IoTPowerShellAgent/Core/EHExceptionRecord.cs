@@ -2,9 +2,6 @@ using System;
 
 namespace IoTPowerShellAgent.Core
 {
-    /// <summary>
-    /// Represents an exception record with additional metadata
-    /// </summary>
     public readonly struct EHExceptionRecord
     {
         public string Message { get; }
@@ -13,11 +10,6 @@ namespace IoTPowerShellAgent.Core
         public DateTime Timestamp { get; }
         public Exception? InnerException { get; }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EHExceptionRecord"/> struct.
-        /// </summary>
-        /// <param name="ex">The exception to initialize the record with.</param>
-        /// <exception cref="ArgumentNullException">Thrown if the <paramref name="ex"/> parameter is null.</exception>
         public EHExceptionRecord(Exception ex)
         {
             if (ex == null)

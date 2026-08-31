@@ -4,26 +4,26 @@ using System.Runtime.InteropServices;
 
 namespace IoTPowerShellAgent.Utilities
 {
-    /// <summary>
-    /// Utility class for process management using P/Invoke for better performance
-    /// </summary>
+
+
+
     public static class ProcessUtil
     {
         private static long _lastCpuTime = 0;
         private static DateTime _lastCpuSample = DateTime.MinValue;
         private static long _lastSystemTime = 0;
 
-        /// <summary>
-        /// Gets the current process information
-        /// </summary>
+
+
+
         public static Process GetCurrentProcess()
         {
             return Process.GetCurrentProcess();
         }
 
-        /// <summary>
-        /// Gets process memory usage in MB using P/Invoke for better performance
-        /// </summary>
+
+
+
         public static long GetMemoryUsageMB()
         {
             try
@@ -39,19 +39,19 @@ namespace IoTPowerShellAgent.Utilities
             }
             catch
             {
-                // Fallback to managed API
+
             }
 
-            // Fallback to managed API if P/Invoke fails
+
             using (var process = Process.GetCurrentProcess())
             {
                 return process.WorkingSet64 / (1024 * 1024);
             }
         }
 
-        /// <summary>
-        /// Gets CPU usage percentage using P/Invoke for accurate measurement
-        /// </summary>
+
+
+
         public static double GetCpuUsage()
         {
             try
@@ -105,7 +105,7 @@ namespace IoTPowerShellAgent.Utilities
             }
             catch
             {
-                // Fallback to managed API if P/Invoke fails
+
                 try
                 {
                     using (var process = Process.GetCurrentProcess())
@@ -120,9 +120,9 @@ namespace IoTPowerShellAgent.Utilities
             }
         }
 
-        /// <summary>
-        /// Gets detailed memory information using P/Invoke
-        /// </summary>
+
+
+
         public static (long WorkingSetMB, long PrivateMB, long PeakWorkingSetMB) GetDetailedMemoryInfo()
         {
             try
@@ -142,10 +142,10 @@ namespace IoTPowerShellAgent.Utilities
             }
             catch
             {
-                // Fallback handling
+
             }
 
-            // Fallback
+
             using (var process = Process.GetCurrentProcess())
             {
                 return (
@@ -156,9 +156,9 @@ namespace IoTPowerShellAgent.Utilities
             }
         }
 
-        /// <summary>
-        /// Sets process priority class using P/Invoke
-        /// </summary>
+
+
+
         public static bool SetProcessPriority(uint priorityClass)
         {
             try
@@ -172,9 +172,9 @@ namespace IoTPowerShellAgent.Utilities
             }
         }
 
-        /// <summary>
-        /// Sets thread priority using P/Invoke
-        /// </summary>
+
+
+
         public static bool SetThreadPriority(int priority)
         {
             try

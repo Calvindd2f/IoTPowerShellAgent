@@ -3,95 +3,61 @@ using System.IO;
 
 namespace IoTPowerShellAgent.Utilities
 {
-    /// <summary>
-    /// Utility class for managing installation paths.
-    /// </summary>
     public static class InstallationPaths
     {
-        /// <summary>
-        /// Gets the program directory based on organization ID
-        /// </summary>
-        public static string GetProgramDirectory(string orgId)
+        public static string GetProgramDirectory()
         {
             string programFilesDir = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            return Path.Combine(programFilesDir, "IoTPowerShellAgent", orgId);
+            return Path.Combine(programFilesDir, "IoTPowerShellAgent");
         }
 
-        /// <summary>
-        /// Gets the data directory based on organization ID
-        /// </summary>
-        public static string GetDataDirectory(string orgId)
+        public static string GetDataDirectory()
         {
             string programDataDir = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-            return Path.Combine(programDataDir, "IoTPowerShellAgent", orgId);
+            return Path.Combine(programDataDir, "IoTPowerShellAgent");
         }
 
-        /// <summary>
-        /// Gets the scripts directory based on organization ID
-        /// </summary>
-        public static string GetScriptsDirectory(string orgId)
+        public static string GetScriptsDirectory()
         {
             string systemDrive = Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\";
-            return Path.Combine(systemDrive, "IoTPowerShellAgent", "scripts", orgId);
+            return Path.Combine(systemDrive, "IoTPowerShellAgent", "scripts");
         }
 
-        /// <summary>
-        /// Gets the agent executable path
-        /// </summary>
-        public static string GetAgentExecutablePath(string orgId)
+        public static string GetAgentExecutablePath()
         {
-            return Path.Combine(GetProgramDirectory(orgId), "IoTPowerShellAgent.exe");
+            return Path.Combine(GetProgramDirectory(), "IoTPowerShellAgent.exe");
         }
 
-        /// <summary>
-        /// Gets the service executable path
-        /// </summary>
-        public static string GetServiceExecutablePath(string orgId)
+        public static string GetServiceExecutablePath()
         {
-            return GetAgentExecutablePath(orgId);
+            return GetAgentExecutablePath();
         }
 
-        /// <summary>
-        /// Gets the service manager path
-        /// </summary>
-        public static string GetServiceManagerPath(string orgId)
+        public static string GetServiceManagerPath()
         {
-            return GetAgentExecutablePath(orgId);
+            return GetAgentExecutablePath();
         }
 
-        /// <summary>
-        /// Gets the configuration file path
-        /// </summary>
-        public static string GetConfigFilePath(string orgId)
+        public static string GetConfigFilePath()
         {
-            return Path.Combine(GetDataDirectory(orgId), "appsettings.json");
+            return Path.Combine(GetDataDirectory(), "appsettings.json");
         }
 
-        /// <summary>
-        /// Gets the log file path
-        /// </summary>
-        public static string GetLogFilePath(string orgId)
+        public static string GetLogFilePath()
         {
-            return Path.Combine(GetDataDirectory(orgId), "iot_powershell_agent.log");
+            return Path.Combine(GetDataDirectory(), "iot_powershell_agent.log");
         }
 
-        /// <summary>
-        /// Gets the service name based on organization ID
-        /// </summary>
-        public static string GetServiceName(string orgId)
+        public static string GetServiceName()
         {
-            return $"IoTPowerShellAgent_{orgId}";
+            return "IoTPowerShellAgent";
         }
 
-        /// <summary>
-        /// Creates all required directories for the installation
-        /// </summary>
-        public static void CreateDirectories(string orgId)
+        public static void CreateDirectories()
         {
-            Directory.CreateDirectory(GetProgramDirectory(orgId));
-            Directory.CreateDirectory(GetDataDirectory(orgId));
-            Directory.CreateDirectory(GetScriptsDirectory(orgId));
+            Directory.CreateDirectory(GetProgramDirectory());
+            Directory.CreateDirectory(GetDataDirectory());
+            Directory.CreateDirectory(GetScriptsDirectory());
         }
     }
 }
-

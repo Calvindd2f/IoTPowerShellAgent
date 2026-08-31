@@ -14,9 +14,9 @@ using IoTPowerShellAgent.Utilities;
 
 namespace IoTPowerShellAgent.IoT
 {
-    /// <summary>
-    /// Service for Azure IoT Hub integration
-    /// </summary>
+
+
+
     public class IoTHubService : IIoTHubService
     {
         private DeviceClient? _deviceClient;
@@ -28,19 +28,19 @@ namespace IoTPowerShellAgent.IoT
         public IoTHubService(ILogCallback? logCallback = null)
         {
             _settings = SettingsService.Instance;
-            _logCallback = logCallback ?? this; // Use this (IoT Hub) as default callback if none provided
+            _logCallback = logCallback ?? this;
         }
 
-        /// <summary>
-        /// Connects to Azure IoT Hub
-        /// </summary>
+
+
+
         public async Task ConnectAsync()
         {
             var transportType = GetTransportType(_settings.Settings.TransportType);
 
             if (!string.IsNullOrEmpty(_settings.Settings.ModuleId))
             {
-                // Use ModuleClient for IoT Edge modules
+
                 if (!string.IsNullOrEmpty(_settings.Settings.IoTHubConnectionString))
                 {
                     _moduleClient = ModuleClient.CreateFromConnectionString(
@@ -49,7 +49,7 @@ namespace IoTPowerShellAgent.IoT
                 }
                 else
                 {
-                    // Use individual credentials
+
                     _moduleClient = CreateModuleClientFromCredentials(transportType);
                 }
 
@@ -59,7 +59,7 @@ namespace IoTPowerShellAgent.IoT
             }
             else
             {
-                // Use DeviceClient for regular devices
+
                 if (!string.IsNullOrEmpty(_settings.Settings.IoTHubConnectionString))
                 {
                     _deviceClient = DeviceClient.CreateFromConnectionString(
@@ -68,7 +68,7 @@ namespace IoTPowerShellAgent.IoT
                 }
                 else
                 {
-                    // Use individual credentials
+
                     _deviceClient = CreateDeviceClientFromCredentials(transportType);
                 }
 
@@ -77,9 +77,9 @@ namespace IoTPowerShellAgent.IoT
             }
         }
 
-        /// <summary>
-        /// Gets the transport type from string configuration
-        /// </summary>
+
+
+
         private static TransportType GetTransportType(string transportType)
         {
             return transportType?.ToLowerInvariant() switch
@@ -88,13 +88,13 @@ namespace IoTPowerShellAgent.IoT
                 "mqtt_websocket_only" or "mqttwebsocketonly" or "mqtt_ws" => TransportType.Mqtt_WebSocket_Only,
                 "amqp_websocket_only" or "amqpwebsocketonly" or "amqp_ws" => TransportType.Amqp_WebSocket_Only,
                 "http1" => TransportType.Http1,
-                _ => TransportType.Amqp // Default
+                _ => TransportType.Amqp
             };
         }
 
-        /// <summary>
-        /// Creates a DeviceClient from individual credentials
-        /// </summary>
+
+
+
         private DeviceClient CreateDeviceClientFromCredentials(TransportType transportType)
         {
             if (string.IsNullOrEmpty(_settings.Settings.AzureIotHubHost) ||
@@ -105,28 +105,28 @@ namespace IoTPowerShellAgent.IoT
                     "Either IoTHubConnectionString or AzureIotHubHost, DeviceId, and SharedAccessKey must be provided.");
             }
 
-            // Generate SAS token
+
             string sasToken = SasTokenGenerator.GenerateDeviceSasToken(
                 _settings.Settings.AzureIotHubHost,
                 _settings.Settings.DeviceId,
                 _settings.Settings.SharedAccessKey,
                 TimeSpan.FromHours(1));
 
-            // Create authentication using SAS token
+
             var authMethod = new DeviceAuthenticationWithToken(
                 _settings.Settings.DeviceId,
                 sasToken);
 
-            // Create device client
+
             return DeviceClient.Create(
                 _settings.Settings.AzureIotHubHost,
                 authMethod,
                 transportType);
         }
 
-        /// <summary>
-        /// Creates a ModuleClient from individual credentials
-        /// </summary>
+
+
+
         private ModuleClient CreateModuleClientFromCredentials(TransportType transportType)
         {
             if (string.IsNullOrEmpty(_settings.Settings.AzureIotHubHost) ||
@@ -138,29 +138,29 @@ namespace IoTPowerShellAgent.IoT
                     "Either IoTHubConnectionString or AzureIotHubHost, DeviceId, ModuleId, and SharedAccessKey must be provided.");
             }
 
-            // Generate SAS token
+
             string resourceUri = $"{_settings.Settings.AzureIotHubHost}/devices/{_settings.Settings.DeviceId}/modules/{_settings.Settings.ModuleId}";
             string sasToken = SasTokenGenerator.GenerateSasToken(
                 resourceUri,
                 _settings.Settings.SharedAccessKey,
                 TimeSpan.FromHours(1));
 
-            // Create authentication using SAS token
+
             var authMethod = new ModuleAuthenticationWithToken(
                 _settings.Settings.DeviceId,
                 _settings.Settings.ModuleId,
                 sasToken);
 
-            // Create module client
+
             return ModuleClient.Create(
                 _settings.Settings.AzureIotHubHost,
                 authMethod,
                 transportType);
         }
 
-        /// <summary>
-        /// Validates the script execution request payload
-        /// </summary>
+
+
+
         private (bool IsValid, string? ErrorMessage) ValidateScriptExecutionRequest(ScriptExecutionRequest? request)
         {
             if (request == null)
@@ -173,19 +173,19 @@ namespace IoTPowerShellAgent.IoT
                 return (false, "Script field is required and cannot be empty");
             }
 
-            // Validate script length (prevent extremely large scripts that could cause OOM)
-            const int maxScriptLength = 10 * 1024 * 1024; // 10MB max
+
+            const int maxScriptLength = 10 * 1024 * 1024;
             if (request.Script.Length > maxScriptLength)
             {
                 return (false, $"Script exceeds maximum length of {maxScriptLength / 1024 / 1024}MB");
             }
 
-            // Validate base64 encoding if flagged
+
             if (request.IsBase64Encoded)
             {
                 try
                 {
-                    // Try to decode to validate base64 format
+
                     byte[] bytes = Convert.FromBase64String(request.Script);
                     if (bytes.Length == 0)
                     {
@@ -201,22 +201,22 @@ namespace IoTPowerShellAgent.IoT
             return (true, null);
         }
 
-        /// <summary>
-        /// Handles direct method invocation for script execution
-        /// </summary>
+
+
+
         private async Task<MethodResponse> ExecuteScriptMethodHandler(MethodRequest methodRequest, object userContext)
         {
-            // Elevate process priority to HIGH during execution for optimal performance
-            // Priority is automatically restored to NORMAL when execution completes
+
+
             using (new ProcessPriorityManager())
             {
-                // Create cancellation token with timeout from settings
+
                 var settings = SettingsService.Instance.Settings;
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.ScriptTimeoutSeconds));
-                
+
                 try
                 {
-                    // Validate JSON payload structure before deserialization
+
                     if (string.IsNullOrWhiteSpace(methodRequest.DataAsJson))
                     {
                         var invalidResponse = new ScriptExecutionResponse
@@ -229,7 +229,7 @@ namespace IoTPowerShellAgent.IoT
                         return new MethodResponse(Encoding.UTF8.GetBytes(invalidResponseJson), 400);
                     }
 
-                    // Deserialize and validate payload
+
                     ScriptExecutionRequest? request;
                     try
                     {
@@ -247,7 +247,7 @@ namespace IoTPowerShellAgent.IoT
                         return new MethodResponse(Encoding.UTF8.GetBytes(invalidResponseJson), 400);
                     }
 
-                    // Validate request payload schema and content
+
                     var (isValid, validationError) = ValidateScriptExecutionRequest(request);
                     if (!isValid)
                     {
@@ -261,7 +261,7 @@ namespace IoTPowerShellAgent.IoT
                         return new MethodResponse(Encoding.UTF8.GetBytes(invalidResponseJson), 400);
                     }
 
-                    // Handle base64 encoded scripts (optional - IoT Hub doesn't require it, but supports it)
+
                     string script = request.Script;
                     if (request.IsBase64Encoded || IsBase64String(script))
                     {
@@ -272,33 +272,33 @@ namespace IoTPowerShellAgent.IoT
                         }
                         catch (FormatException)
                         {
-                            // If base64 decode fails, use script as-is
+
                         }
                     }
 
                     var executor = new IoTPowerShellAgent.PowerShell.PowerShellExecutor(_logCallback);
-                    // Use async execution with cancellation token to prevent blocking IoT listener
+
                     var result = await executor.ExecutePowerShellAsync(script, request.IsInlinePowershell, cts.Token).ConfigureAwait(false);
 
-                    // Compress Output field if it's large enough to benefit (threshold: 1KB)
-                    // Compression typically saves 60-80% for JSON data
-                    const int compressionThreshold = 1024; // 1KB
+
+
+                    const int compressionThreshold = 1024;
                     var response = new ScriptExecutionResponse
                     {
                         Success = result.Success,
                         Output = result.Output,
                         ErrorMessage = result.ErrorMessage,
-                        ErrorDetails = result.ErrorDetails, // Include structured error details
+                        ErrorDetails = result.ErrorDetails,
                         IsCompressed = false
                     };
 
-                    // Compress the Output field if it's large
+
                     if (!string.IsNullOrEmpty(result.Output) && result.Output.Length > compressionThreshold)
                     {
                         byte[] outputBytes = Encoding.UTF8.GetBytes(result.Output);
                         byte[] compressedBytes = CompressGZip(outputBytes);
-                        
-                        // Only use compression if it actually reduces size
+
+
                         if (compressedBytes.Length < outputBytes.Length)
                         {
                             response.Output = Convert.ToBase64String(compressedBytes);
@@ -310,8 +310,8 @@ namespace IoTPowerShellAgent.IoT
 
                     string responseJson = JsonSerializer.Serialize(response);
                     byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
-                    
-                    // Priority remains HIGH until this response is returned (HTTP postback)
+
+
                     return new MethodResponse(responseBytes, 200);
                 }
                 catch (OperationCanceledException)
@@ -325,9 +325,9 @@ namespace IoTPowerShellAgent.IoT
 
                     string responseJson = JsonSerializer.Serialize(errorResponse);
                     byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
-                    
-                    // Priority remains HIGH until this error response is returned
-                    return new MethodResponse(responseBytes, 408); // 408 Request Timeout
+
+
+                    return new MethodResponse(responseBytes, 408);
                 }
                 catch (Exception ex)
                 {
@@ -338,13 +338,13 @@ namespace IoTPowerShellAgent.IoT
                         IsCompressed = false
                     };
 
-                    // Compress ErrorMessage field if it's large
+
                     const int compressionThreshold = 1024;
                     if (!string.IsNullOrEmpty(errorResponse.ErrorMessage) && errorResponse.ErrorMessage.Length > compressionThreshold)
                     {
                         byte[] errorBytes = Encoding.UTF8.GetBytes(errorResponse.ErrorMessage);
                         byte[] compressedBytes = CompressGZip(errorBytes);
-                        
+
                         if (compressedBytes.Length < errorBytes.Length)
                         {
                             errorResponse.ErrorMessage = Convert.ToBase64String(compressedBytes);
@@ -356,17 +356,17 @@ namespace IoTPowerShellAgent.IoT
 
                     string responseJson = JsonSerializer.Serialize(errorResponse);
                     byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
-                    
-                    // Priority remains HIGH until this error response is returned
+
+
                     return new MethodResponse(responseBytes, 500);
                 }
-                // Priority is automatically restored to NORMAL here via Dispose()
+
             }
         }
 
-        /// <summary>
-        /// Compresses data using GZip compression
-        /// </summary>
+
+
+
         private static byte[] CompressGZip(byte[] data)
         {
             using (var outputStream = new MemoryStream())
@@ -379,15 +379,15 @@ namespace IoTPowerShellAgent.IoT
             }
         }
 
-        /// <summary>
-        /// Checks if a string is base64 encoded (basic heuristic)
-        /// </summary>
+
+
+
         private static bool IsBase64String(string str)
         {
             if (string.IsNullOrWhiteSpace(str))
                 return false;
 
-            // Base64 strings are typically longer and contain only base64 characters
+
             if (str.Length < 20 || str.Length % 4 != 0)
                 return false;
 
@@ -402,24 +402,24 @@ namespace IoTPowerShellAgent.IoT
             }
         }
 
-        /// <summary>
-        /// Handles input messages from IoT Hub
-        /// </summary>
+
+
+
         private async Task<MessageResponse> HandleInputMessage(Message message, object userContext)
         {
-            // Elevate process priority to HIGH during execution for optimal performance
-            // Priority is automatically restored to NORMAL when execution completes
+
+
             using (new ProcessPriorityManager())
             {
-                // Create cancellation token with timeout from settings
+
                 var settings = SettingsService.Instance.Settings;
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(settings.ScriptTimeoutSeconds));
-                
+
                 try
                 {
                     string messageBody = Encoding.UTF8.GetString(message.GetBytes());
-                    
-                    // Validate JSON payload structure before deserialization
+
+
                     if (string.IsNullOrWhiteSpace(messageBody))
                     {
                         OnLog("Input message payload is empty or invalid", LogOutputType.Error);
@@ -437,7 +437,7 @@ namespace IoTPowerShellAgent.IoT
                         return MessageResponse.Abandoned;
                     }
 
-                    // Validate request payload schema and content
+
                     var (isValid, validationError) = ValidateScriptExecutionRequest(request);
                     if (!isValid)
                     {
@@ -448,7 +448,7 @@ namespace IoTPowerShellAgent.IoT
                     if (request != null && !string.IsNullOrEmpty(request.Script))
                     {
                         var executor = new IoTPowerShellAgent.PowerShell.PowerShellExecutor(_logCallback);
-                        // Use async execution with cancellation token to prevent blocking IoT listener
+
                         await executor.ExecutePowerShellAsync(request.Script, request.IsInlinePowershell, cts.Token).ConfigureAwait(false);
                     }
 
@@ -464,13 +464,13 @@ namespace IoTPowerShellAgent.IoT
                     OnLog($"Error processing input message: {ex}", LogOutputType.Error);
                     return MessageResponse.Abandoned;
                 }
-                // Priority is automatically restored to NORMAL here via Dispose()
+
             }
         }
 
-        /// <summary>
-        /// Sends telemetry data to IoT Hub
-        /// </summary>
+
+
+
         public async Task SendTelemetryAsync(object telemetryData)
         {
             try
@@ -493,9 +493,9 @@ namespace IoTPowerShellAgent.IoT
             }
         }
 
-        /// <summary>
-        /// Updates device twin reported properties
-        /// </summary>
+
+
+
         public async Task UpdateTwinAsync(TwinCollection reportedProperties)
         {
             try
@@ -515,9 +515,9 @@ namespace IoTPowerShellAgent.IoT
             }
         }
 
-        /// <summary>
-        /// ILogCallback implementation - sends logs as telemetry
-        /// </summary>
+
+
+
         public void OnLog(string message, LogOutputType logType)
         {
             try
@@ -530,7 +530,7 @@ namespace IoTPowerShellAgent.IoT
                     deviceId = _settings.Settings.DeviceId
                 };
 
-                // Send as telemetry in background (fire-and-forget with proper error handling)
+
                 _ = Task.Run(async () =>
                 {
                     try
@@ -539,11 +539,11 @@ namespace IoTPowerShellAgent.IoT
                     }
                     catch (Exception ex)
                     {
-                        // Log telemetry send failures but don't block
-                        // This prevents log telemetry from causing cascading failures
+
+
                         try
                         {
-                            // Try to log via callback if available, but don't recurse
+
                             if (_logCallback != null && _logCallback != this)
                             {
                                 _logCallback.OnLog($"Failed to send log telemetry: {ex.Message}", LogOutputType.Warning);
@@ -551,14 +551,14 @@ namespace IoTPowerShellAgent.IoT
                         }
                         catch
                         {
-                            // Silently fail to avoid infinite recursion
+
                         }
                     }
                 }, CancellationToken.None);
             }
             catch
             {
-                // Silently fail to avoid blocking
+
             }
         }
 
@@ -573,41 +573,41 @@ namespace IoTPowerShellAgent.IoT
         }
     }
 
-    /// <summary>
-    /// Request model for script execution
-    /// </summary>
+
+
+
     public class ScriptExecutionRequest
     {
         public string Script { get; set; } = string.Empty;
         public bool IsInlinePowershell { get; set; } = false;
-        public bool IsBase64Encoded { get; set; } = false; // Added for base64 support
+        public bool IsBase64Encoded { get; set; } = false;
     }
 
-    /// <summary>
-    /// Response model for script execution
-    /// </summary>
+
+
+
     public class ScriptExecutionResponse
     {
         public bool Success { get; set; }
         public string Output { get; set; } = string.Empty;
         public string ErrorMessage { get; set; } = string.Empty;
-        /// <summary>
-        /// Structured error details from PowerShell ErrorRecord (includes inner exceptions)
-        /// </summary>
+
+
+
         public List<PowerShellErrorDetails>? ErrorDetails { get; set; }
-        /// <summary>
-        /// Indicates if the Output field is compressed (gzip + base64).
-        /// When true, the Output field contains base64-encoded gzip-compressed data.
-        /// Decompress by: base64 decode → gzip decompress → UTF-8 decode
-        /// </summary>
+
+
+
+
+
         public bool IsCompressed { get; set; } = false;
-        /// <summary>
-        /// Original size before compression (in bytes). Only set when IsCompressed is true.
-        /// </summary>
+
+
+
         public int? OriginalSize { get; set; }
-        /// <summary>
-        /// Compressed size (in bytes). Only set when IsCompressed is true.
-        /// </summary>
+
+
+
         public int? CompressedSize { get; set; }
     }
 }

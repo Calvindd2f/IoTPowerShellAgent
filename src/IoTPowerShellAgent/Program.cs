@@ -3,49 +3,53 @@ using System.ServiceProcess;
 using System.Threading.Tasks;
 using IoTPowerShellAgent.Installation;
 using IoTPowerShellAgent.Services;
+#if DEBUG
 using IoTPowerShellAgent.TestHelpers;
+#endif
 
 namespace IoTPowerShellAgent
 {
-    /// <summary>
-    /// Main entry point for the PowerShell Executor Service
-    /// </summary>
+
+
+
     static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
+
+
+
         static int Main(string[] args)
         {
-            // Check for installer commands
+
             if (args.Length > 0 && IsInstallerCommand(args[0]))
             {
                 return InstallerProgram.RunInstaller(args);
             }
 
-            // Check for debug mode
+
+#if DEBUG
             if (args.Length > 0 && (args[0] == "--debug" || args[0] == "-d"))
             {
                 RunDebugMode().GetAwaiter().GetResult();
                 return 0;
             }
 
-            // Check for test mode
+
             if (args.Length > 0 && (args[0] == "--test" || args[0] == "-t"))
             {
                 RunTestMode(args).GetAwaiter().GetResult();
                 return 0;
             }
+#endif
 
             if (Environment.UserInteractive)
             {
-                // Run as console application for debugging
+
                 RunAsConsole(args).GetAwaiter().GetResult();
                 return 0;
             }
             else
             {
-                // Run as Windows Service
+
                 ServiceBase[] ServicesToRun;
                 ServicesToRun = new ServiceBase[]
                 {
@@ -63,6 +67,7 @@ namespace IoTPowerShellAgent
                     cmd == "start" || cmd == "stop" || cmd == "status" || cmd == "update";
         }
 
+#if DEBUG
         private static async Task RunDebugMode()
         {
             Console.WriteLine("╔══════════════════════════════════════════════════════════════╗");
@@ -99,7 +104,7 @@ namespace IoTPowerShellAgent
 
                 string command = input.Trim();
 
-                // Handle special commands
+
                 if (command.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
                     command.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
                     command.Equals("q", StringComparison.OrdinalIgnoreCase))
@@ -140,7 +145,7 @@ namespace IoTPowerShellAgent
                     continue;
                 }
 
-                // Handle base64 prefix
+
                 bool isBase64 = false;
                 string script = command;
                 if (command.StartsWith("base64:", StringComparison.OrdinalIgnoreCase))
@@ -149,7 +154,7 @@ namespace IoTPowerShellAgent
                     isBase64 = true;
                 }
 
-                // Execute PowerShell script
+
                 Console.WriteLine();
                 try
                 {
@@ -201,6 +206,8 @@ namespace IoTPowerShellAgent
             }
         }
 
+#endif
+
         private static async Task RunAsConsole(string[] args)
         {
             Console.WriteLine("IoTPowerShellAgent - Console Mode");
@@ -215,12 +222,12 @@ namespace IoTPowerShellAgent
 
             try
             {
-                // Use reflection to access protected methods for console mode testing
+
                 var onStartMethod = typeof(PowerShellExecutorService).GetMethod("OnStart",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 onStartMethod?.Invoke(service, new object[] { args });
 
-                // Wait for exit
+
                 await Task.Delay(-1);
             }
             catch (Exception ex)
