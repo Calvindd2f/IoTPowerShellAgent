@@ -3,7 +3,7 @@ name: Build & Test (Prod)
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for semantic versioning
+          fetch-depth: 0
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -33,13 +33,13 @@ jobs:
         shell: pwsh
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src\IoTPowerShellAgent\IoTPowerShellAgent.csproj
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release /p:Version=${{ steps.version.outputs.version }}
+        run: dotnet build src\IoTPowerShellAgent\IoTPowerShellAgent.csproj --configuration Release /p:Version=${{ steps.version.outputs.version }}
 
       - name: Test
-        run: dotnet test --no-build --configuration Release --logger trx
+        run: dotnet test src\IoTPowerShellAgent.Tests\IoTPowerShellAgent.Tests.csproj --configuration Release --logger trx
 
       - name: Run Pester Tests
         shell: pwsh

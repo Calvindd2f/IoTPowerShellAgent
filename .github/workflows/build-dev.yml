@@ -3,9 +3,9 @@ name: Build & Test (Dev)
 on:
   push:
     branches:
-      - '**'
+      - "**"
     tags-ignore:
-      - 'v*.*.*'
+      - "v*.*.*"
   pull_request:
 
 jobs:
@@ -35,13 +35,13 @@ jobs:
         shell: pwsh
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src\IoTPowerShellAgent\IoTPowerShellAgent.csproj
 
       - name: Build
-        run: dotnet build --no-restore --configuration Debug /p:Version=${{ steps.version.outputs.version }}
+        run: dotnet build src\IoTPowerShellAgent\IoTPowerShellAgent.csproj --configuration Debug /p:Version=${{ steps.version.outputs.version }}
 
       - name: Test
-        run: dotnet test --no-build --configuration Debug --logger trx
+        run: dotnet test src\IoTPowerShellAgent.Tests\IoTPowerShellAgent.Tests.csproj --configuration Debug --logger trx
 
       - name: Run Pester Tests
         shell: pwsh
