@@ -1,46 +1,190 @@
-# IoTPowerShellAgent - PowerShell Executor Service
+Azure IoT Hub
+│
+│ Direct Method
+▼
+┌───────────────────────────┐
+│ IoTPowerShellAgent │
+│ │
+│ C# Windows Service │
+│ │ │
+│ ▼ │
+│ PowerShell SDK Host │
+│ │ │
+│ ▼ │
+│ PowerShell Runspace │
+│ │ │
+│ ▼ │
+│ Script Execution │
+└───────────────────────────┘
+│
+├── Telemetry
+├── Execution results
+└── Device/Module Twin
 
-A Windows Service for executing PowerShell scripts remotely via Azure IoT Hub. This service provides secure, scalable PowerShell execution capabilities with comprehensive logging and telemetry.
+---
 
-## Features
+> ⚠️ Security: IoTPowerShellAgent executes PowerShell under the Windows Service account. The default installer configures the service as NT AUTHORITY\SYSTEM, meaning remotely submitted scripts can execute with SYSTEM-level privileges. Deployment therefore requires strict control of IoT Hub authentication and authorization.
 
-- **PowerShell Execution**: Execute PowerShell scripts through Azure IoT Hub direct methods
-- **Azure IoT Hub Integration**: Full support for device/module twins, telemetry, and direct methods
-- **Windows Service**: Runs as a Windows Service with console mode for debugging
-- **Comprehensive Logging**: Streams all PowerShell output types (Verbose, Debug, Warning, Error, Information, Progress)
-- **JSON API Support**: Built-in JSON conversion utilities for PowerShell objects (embedded module)
-- **Performance Monitoring**: Process and system performance tracking using P/Invoke
-- **Activity Node Support**: Configurable activity node mode for workflow integration
+# IoTPowerShellAgent
 
-## Azure Infrastructure
+**A C# Windows Service for remotely executing PowerShell through Azure IoT Hub.**
 
-The complete Azure backend infrastructure (IoT Hub, Storage, Event Grid, Function App, etc.) can be deployed via the Bicep templates located in the `backend/` directory. See the [Backend Documentation](backend/README.md) for deployment instructions and architectural details.
+`IoTPowerShellAgent` is a Windows-based execution agent that hosts PowerShell inside a .NET application and exposes controlled script execution through Azure IoT Hub direct methods.
 
-## Project Structure
+The agent is implemented entirely in C#, using the PowerShell SDK to host and execute PowerShell rather than relying on an external `powershell.exe` process for each request.
 
-The project is organized into a clean, modular structure:
+The project is designed for infrastructure and automation scenarios where a persistent Windows execution agent needs to receive work remotely, execute PowerShell locally, and return structured results and telemetry.
 
+> **Security:** The default installer configures the service to run as `NT AUTHORITY\SYSTEM`. Any script submitted to the agent therefore executes with the privileges of the service account. Access to the agent must be treated as privileged remote code execution and protected accordingly.
+
+## Architecture
+
+```text
+                         Azure
+                           │
+                    ┌──────▼──────┐
+                    │   IoT Hub   │
+                    └──────┬──────┘
+                           │
+                     Direct Methods
+                           │
+                           ▼
+              ┌────────────────────────┐
+              │  IoTPowerShellAgent    │
+              │                        │
+              │   C# / .NET 8          │
+              │          │             │
+              │          ▼             │
+              │   PowerShell SDK       │
+              │          │             │
+              │          ▼             │
+              │    PowerShell Host     │
+              │          │             │
+              │          ▼             │
+              │    Script Execution    │
+              │                        │
+              │   ┌────────────────┐   │
+              │   │ Telemetry      │   │
+              │   │ JSON Results   │   │
+              │   │ Metrics        │   │
+              │   │ Twin State     │   │
+              │   └────────────────┘   │
+              └────────────────────────┘
+                           │
+                           ▼
+                    Local Windows OS
 ```
+
+The service maintains a persistent application process and hosts PowerShell through the PowerShell SDK. This allows PowerShell execution, telemetry, process monitoring, and Azure IoT integration to be managed within the same .NET application.
+
+## Why C#?
+
+The agent is intentionally implemented as a C# application rather than a PowerShell script.
+
+This provides a persistent .NET host for:
+
+- Windows Service lifecycle management
+- Azure IoT Hub connectivity
+- PowerShell runspace management
+- structured execution results
+- process and system telemetry
+- cancellation and execution timeouts
+- native Windows and .NET APIs
+- long-running service operation
+
+PowerShell remains the execution language exposed to the caller, while C# provides the host and execution infrastructure around it.
+
+## Core capabilities
+
+### Remote PowerShell execution
+
+PowerShell scripts can be submitted through Azure IoT Hub direct methods and executed locally by the agent.
+
+### Azure IoT Hub integration
+
+The agent supports:
+
+- Direct Methods
+- Device Twins
+- Module Twins
+- telemetry
+- device/module identity
+- remote execution workflows
+
+### PowerShell SDK hosting
+
+PowerShell is hosted directly inside the .NET process, allowing the application to manage execution, streams, cancellation, and results without treating PowerShell as an external command-line process.
+
+### Structured execution results
+
+PowerShell output streams are captured and represented as structured execution results.
+
+Supported streams include:
+
+- Output
+- Error
+- Warning
+- Verbose
+- Debug
+- Information
+- Progress
+
+### JSON serialization
+
+The project includes an embedded PowerShell JSON conversion module for serializing PowerShell-specific and complex .NET objects into representations suitable for workflow and API consumption.
+
+### Performance and system telemetry
+
+The agent collects process and system metrics using native Windows/.NET APIs and P/Invoke where required.
+
+### Windows Service
+
+The same application can operate as:
+
+- an interactive debugging environment
+- a console application
+- a Windows Service
+
+This allows the execution engine to be tested independently before being deployed as a persistent service.
+
+## Project structure
+
+```text
 src/IoTPowerShellAgent/
-├── Core/          # Domain models and core services
-├── PowerShell/    # PowerShell host and executor
-├── IoT/           # Azure IoT Hub integration
-├── Services/      # Windows Service implementation
-└── Utilities/     # JSON conversion, process management, etc.
+
+├── Core/
+│   └── Domain models and core services
+│
+├── PowerShell/
+│   └── PowerShell hosting and execution
+│
+├── IoT/
+│   └── Azure IoT Hub integration
+│
+├── Services/
+│   └── Windows Service implementation
+│
+└── Utilities/
+    └── Serialization, process management,
+        telemetry and supporting functionality
 ```
 
-See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed structure information.
+See [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) for a detailed breakdown.
 
-## Prerequisites
+## Requirements
 
-- .NET 8.0 SDK or later
+- .NET 8 SDK or later
 - Windows 10/11 or Windows Server 2016+
-- Azure IoT Hub account (for IoT Hub integration)
-- PowerShell 5.1 or later (included with Windows)
+- PowerShell 5.1 or later
+- Azure IoT Hub for remote execution
+
+The agent is a Windows application because its execution model relies on Windows Service functionality and Windows PowerShell/system APIs.
 
 ## Configuration
 
-1. Copy `config/appsettings.json` and configure your settings:
+The agent can be configured through `appsettings.json` and the application's supported configuration providers.
+
+Example:
 
 ```json
 {
@@ -50,90 +194,102 @@ See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for detailed structure informat
 }
 ```
 
-2. For IoT Edge modules, set the `ModuleId` property.
+**Do not commit production credentials to configuration files or source control.**
+
+For production deployments, credentials should be supplied through an appropriate secret-management or protected configuration mechanism.
+
+For IoT Edge deployments, configure the appropriate `ModuleId`.
 
 ## Building
-
-```bash
-cd src/IoTPowerShellAgent
-dotnet build
-```
-
-Or from the root directory:
 
 ```bash
 dotnet build src/IoTPowerShellAgent/IoTPowerShellAgent.csproj
 ```
 
+Or from the repository root:
+
+```bash
+dotnet build
+```
+
 ## Running
 
-### Debug Mode (Interactive Testing)
+### Debug mode
 
-Interactive testing mode that allows you to test PowerShell execution without connecting to IoT Hub:
+Debug mode runs the execution environment interactively without requiring an IoT Hub connection.
 
 ```bash
-cd src/IoTPowerShellAgent
 dotnet run -- --debug
-# or
-dotnet run -- -d
 ```
 
-This mode provides an interactive shell where you can:
-- Execute PowerShell commands directly
-- Test base64-encoded scripts
-- View environment metrics
-- Run sample test scripts
+Available commands include:
 
-**Example Usage:**
-```
-PS> Get-Date
-PS> Get-Process | Select-Object -First 5 Name, CPU
-PS> base64:RwBlAHQALQBEAGEAdABlAA==
-PS> metrics
-PS> sample
-PS> help
-PS> exit
+```text
+Get-Date
+Get-Process | Select-Object -First 5 Name, CPU
+base64:<encoded-script>
+metrics
+sample
+help
+exit
 ```
 
-### Test Mode (One-Time Execution)
+This mode is intended for development and troubleshooting.
 
-Run a single test without IoT Hub connection:
+### Test mode
+
+Execute a single local test without establishing an IoT Hub connection:
 
 ```bash
-dotnet run -- --test                           # Run sample test
-dotnet run -- --test --script="Get-Date"       # Test custom script
-dotnet run -- --test --script=<base64> --base64 # Test base64 script
-dotnet run -- --test --metrics                # Test environment metrics
+dotnet run -- --test
+dotnet run -- --test --script="Get-Date"
+dotnet run -- --test --script=<base64> --base64
+dotnet run -- --test --metrics
 ```
 
-### Console Mode (Development)
+### Console mode
+
+Run the service host interactively:
 
 ```bash
-cd src/IoTPowerShellAgent
 dotnet run
 ```
 
-This mode runs the service as a console application, connecting to IoT Hub if configured. Use `--debug` for testing without IoT Hub.
+When configured, the application connects to Azure IoT Hub and processes incoming requests.
 
-### Windows Service Mode (Production)
+### Windows Service
 
-1. Build the project in Release mode
-2. Install the service using the installer:
-   ```bash
-   IoTPowerShellAgent.exe install [orgId]
-   ```
-   The installer automatically configures the service to run as `NT AUTHORITY\SYSTEM`, ensuring PowerShell scripts execute with SYSTEM privileges.
-3. Update the configuration file with your IoT Hub connection string
-4. Start the service:
-   ```bash
-   IoTPowerShellAgent.exe start [orgId]
-   ```
+Build a Release deployment and install the service using the provided installer:
 
-**Note**: The service is configured to run as `NT AUTHORITY\SYSTEM` by default. All PowerShell scripts executed through the service will run with SYSTEM privileges. Use the `status` command to verify the service account configuration.
+```bash
+IoTPowerShellAgent.exe install [orgId]
+```
 
-## Usage via IoT Hub
+The default installation configures the service account as:
 
-### Execute Script via Direct Method
+```text
+NT AUTHORITY\SYSTEM
+```
+
+Start the service:
+
+```bash
+IoTPowerShellAgent.exe start [orgId]
+```
+
+Check service state:
+
+```bash
+IoTPowerShellAgent.exe status
+```
+
+Because the service executes PowerShell using the service account's privileges, service installation and IoT Hub access should be treated as privileged operations.
+
+## Remote execution
+
+The agent accepts PowerShell execution requests through Azure IoT Hub direct methods.
+
+Example request:
 
 ```json
 {
@@ -145,7 +301,7 @@ This mode runs the service as a console application, connecting to IoT Hub if co
 }
 ```
 
-### Response
+Example response:
 
 ```json
 {
@@ -155,42 +311,79 @@ This mode runs the service as a console application, connecting to IoT Hub if co
 }
 ```
 
-## JSON Conversion Module
+The exact request and response schema is documented in the backend documentation.
 
-The service includes an embedded JSON conversion module (formerly `powershellruntimeextension`) that provides advanced JSON serialization for PowerShell objects. This enables:
+## Security model
 
-- Complex object serialization
-- PowerShell-specific type handling
-- API integration for workflows
-- Direct result redirection to external APIs
+`IoTPowerShellAgent` provides a privileged remote execution capability. Its security model therefore depends heavily on protecting the communication and authorization boundary around Azure IoT Hub.
 
-Example usage in PowerShell scripts:
+Consider the following deployment requirements:
 
-```powershell
-$result = Get-Process | Select-Object Name, CPU
-# Results can be automatically converted to JSON via PowerShellExecutionResult.ToJson()
+- Protect IoT Hub credentials.
+- Restrict which identities can invoke execution.
+- Use device/module authentication appropriate to the deployment.
+- Audit executed scripts.
+- Monitor execution telemetry.
+- Restrict network access where practical.
+- Avoid storing secrets in source control.
+- Use the least-privileged service account possible for the workload.
+
+### SYSTEM execution
+
+The default Windows Service configuration uses:
+
+```text
+NT AUTHORITY\SYSTEM
 ```
 
-## Security Considerations
+This is intentional for environments where the agent must perform privileged local administration tasks.
 
-- **Service Account**: The service runs as `NT AUTHORITY\SYSTEM` by default, giving executed PowerShell scripts full system privileges. This is intentional for maximum script execution capabilities, but requires careful access control to the IoT Hub.
-- Store connection strings securely
-- Limit script execution permissions through IoT Hub access control
-- Monitor activity logs for suspicious activity
-- Use Azure IoT Hub device authentication
-- Review and audit all executed scripts
-- Only grant access to trusted devices/modules in Azure IoT Hub
+However, this means that compromise of the agent's execution boundary could result in SYSTEM-level code execution on the host.
 
-## Troubleshooting
+Deployments that do not require SYSTEM privileges should use a more restricted service identity.
 
-- **Service won't start**: Check Event Viewer for errors
-- **IoT Hub connection fails**: Verify connection string and network connectivity
-- **Scripts timeout**: Adjust `ScriptTimeoutSeconds` in configuration
+## Azure backend
+
+The `backend/` directory contains the Azure infrastructure required to support the agent.
+
+This includes the project's infrastructure components such as:
+
+- Azure IoT Hub
+- Storage
+- Event Grid
+- Function App
+- supporting resources
+
+See [`backend/README.md`](backend/README.md) for deployment instructions and architecture.
+
+## Design goals
+
+The project is designed around several principles:
+
+**Persistent execution host**
+
+Maintain a long-running .NET process rather than repeatedly starting a PowerShell process for every operation.
+
+**Separation of concerns**
+
+C# provides the service, transport, lifecycle, telemetry, and execution infrastructure while PowerShell provides the automation language.
+
+**Structured results**
+
+Treat PowerShell execution as a structured operation with explicit streams, status, errors, and metadata rather than returning raw console output alone.
+
+**Remote manageability**
+
+Use Azure IoT Hub as the remote communication and device-management layer.
+
+**Operational visibility**
+
+Expose execution state and system telemetry so the agent can be monitored as part of a larger automation platform.
 
 ## License
 
-[Add your license information here]
+MIT License Calvindd2f
 
 ## Contributing
 
-[Add contribution guidelines if applicable]
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for guidelines and instructions on how to contribute to the project.

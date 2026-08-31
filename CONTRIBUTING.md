@@ -77,7 +77,7 @@ dotnet test
 If you add Pester tests, run them with:
 
 ```powershell
-Invoke-Pester -Path .\tests\PowerShell\
+Invoke-Pester -Path .\src\IoTPowerShellAgent.Tests.Pester\PowerShell\
 ```
 
 ## Pull Request Process

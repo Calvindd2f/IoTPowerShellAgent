@@ -12,7 +12,6 @@ iot_powershell_agent/
 ├── config/                      # Configuration files
 │   └── appsettings.json
 ├── docs/                        # Documentation
-│   ├── README.md
 │   └── PROJECT_STRUCTURE.md
 ├── src/
 │   └── IoTPowerShellAgent/              # Main project source code
