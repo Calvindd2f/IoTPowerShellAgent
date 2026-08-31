@@ -1,10 +1,15 @@
 <Project>
     <PropertyGroup>
         <!-- Semantic versioning: version will be set from Git tags -->
-        <!-- Format: v1.2.3 or 1.2.3 -->
+        <!-- Format: v1.2.3 or 1.2.3 or 1.2.3-preview -->
         <Version Condition="'$(Version)' == ''">1.0.0</Version>
-        <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">$(Version)</AssemblyVersion>
-        <FileVersion Condition="'$(FileVersion)' == ''">$(Version)</FileVersion>
+
+        <!-- Strip any pre-release suffix for AssemblyVersion/FileVersion (they only accept numeric major.minor.build.revision) -->
+        <_VersionPrefix>$([System.Text.RegularExpressions.Regex]::Match($(Version), '^\d+\.\d+\.\d+(\.\d+)?'))</_VersionPrefix>
+        <_VersionPrefix Condition="'$(_VersionPrefix)' == ''">1.0.0</_VersionPrefix>
+
+        <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">$(_VersionPrefix)</AssemblyVersion>
+        <FileVersion Condition="'$(FileVersion)' == ''">$(_VersionPrefix)</FileVersion>
         <InformationalVersion Condition="'$(InformationalVersion)' == ''">$(Version)</InformationalVersion>
     </PropertyGroup>
 </Project>
