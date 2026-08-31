@@ -380,6 +380,20 @@ Use Azure IoT Hub as the remote communication and device-management layer.
 
 Expose execution state and system telemetry so the agent can be monitored as part of a larger automation platform.
 
+## Technical Highlights
+
+- **C# / .NET 8** application implementing the complete agent runtime
+- **PowerShell SDK hosting** with PowerShell executed inside managed .NET runspaces
+- **Windows Service** architecture with interactive console and test execution modes
+- **Azure IoT Hub Direct Methods** for remote execution
+- **Device and Module Twin integration** for device state and configuration
+- **Structured PowerShell stream handling** across Output, Error, Warning, Verbose, Debug, Information, and Progress
+- **Execution timeouts and cancellation** for long-running scripts
+- **Native Windows / .NET telemetry** with P/Invoke where required
+- **Structured JSON serialization** for PowerShell and .NET execution results
+- **Infrastructure as Code** using Azure Bicep for the supporting Azure backend
+- **Separation between transport, execution, service lifecycle, telemetry, and domain components**
+
 ## License
 
 MIT License Calvindd2f

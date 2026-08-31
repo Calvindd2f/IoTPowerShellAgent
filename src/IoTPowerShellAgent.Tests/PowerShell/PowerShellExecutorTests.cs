@@ -32,7 +32,7 @@ namespace IoTPowerShellAgent.Tests.PowerShell
             var result = executor.ExecutePowerShell(script, isInlinePowershell: false);
 
 
-            result.Success.Should().BeTrue();
+            result.Success.Should().BeTrue("because ErrorMessage was: " + result.ErrorMessage);
             result.Output.Should().Contain("Hello World");
             result.ErrorMessage.Should().BeNullOrEmpty();
         }

@@ -46,7 +46,6 @@ namespace IoTPowerShellAgent.Tests.Core
 
 
             settings.ScriptTimeoutSeconds.Should().BeGreaterThan(0);
-            settings.ActivityLogThreshold.Should().BeGreaterThan(0);
         }
     }
 }

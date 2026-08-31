@@ -360,6 +360,7 @@ namespace IoTPowerShellAgent.PowerShell
                                     }
                                 }
                             }
+                            $ErrorActionPreference = 'Continue';
                         ", false);
 
                         preloadPs.Invoke();
