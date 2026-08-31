@@ -1,4 +1,10 @@
-### Why the service runs as SYSTEM
+# Security
+
+This section primarily delves into the architeccture of the service permissions on the endpoint. Which are max, though execution is limited to those with workflow permissions
+
+> The Windows service account defines the maximum privilege of an execution request; the IoT Hub authorization boundary determines who can cause that execution to occur.
+
+## Why the service runs as SYSTEM
 
 The default installation configures `IoTPowerShellAgent` to run as `NT AUTHORITY\SYSTEM`.
 
