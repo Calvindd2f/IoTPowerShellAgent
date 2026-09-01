@@ -1,8 +1,24 @@
 BeforeAll {
     # Import the module or load the assembly
     $assemblyPath = Join-Path $PSScriptRoot "..\..\..\IoTPowerShellAgent\bin\Debug\net8.0-windows\IoTPowerShellAgent.dll"
+    $assemblyPath = [System.IO.Path]::GetFullPath($assemblyPath)
     if (Test-Path $assemblyPath) {
-        Add-Type -Path $assemblyPath
+        # Register an AssemblyResolve handler so transitive dependencies (SMA, IoT SDK, etc.)
+        # are found in the same output directory as the main assembly.
+        $assemblyDir = [System.IO.Path]::GetDirectoryName($assemblyPath)
+        $resolveHandler = [System.ResolveEventHandler]{
+            param($sender, $args)
+            $name = [System.Reflection.AssemblyName]::new($args.Name)
+            $candidate = Join-Path $assemblyDir "$($name.Name).dll"
+            if (Test-Path $candidate) {
+                return [System.Reflection.Assembly]::LoadFrom($candidate)
+            }
+            return $null
+        }
+        [System.AppDomain]::CurrentDomain.add_AssemblyResolve($resolveHandler)
+        [System.Reflection.Assembly]::LoadFrom($assemblyPath) | Out-Null
+    } else {
+        Write-Warning "Assembly not found at: $assemblyPath"
     }
 
     # Import Pester
