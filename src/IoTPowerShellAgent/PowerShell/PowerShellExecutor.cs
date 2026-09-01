@@ -397,6 +397,12 @@ namespace IoTPowerShellAgent.PowerShell
 
                 cancellationToken.ThrowIfCancellationRequested();
 
+                // Reset ErrorActionPreference to default after preload (preload sets it to SilentlyContinue
+                // on the shared runspace, which would suppress errors from the user's script)
+                powerShell.AddScript("$ErrorActionPreference = 'Continue'", false);
+                powerShell.Invoke();
+                powerShell.Commands.Clear();
+
                 powerShell.AddScript(script, false);
 
                 PSInvocationSettings psinvocationSettings = new PSInvocationSettings();
