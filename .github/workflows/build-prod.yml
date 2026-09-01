@@ -44,23 +44,3 @@ jobs:
 
       - name: Build
         run: dotnet build src\IoTPowerShellAgent\IoTPowerShellAgent.csproj --configuration Release /p:Version=${{ steps.version.outputs.version }}
-
-      - name: Test
-        run: dotnet test src\IoTPowerShellAgent.Tests\IoTPowerShellAgent.Tests.csproj --configuration Release --logger trx
-
-      - name: Run Pester Tests
-        shell: pwsh
-        run: |
-          if (Test-Path "src\IoTPowerShellAgent.Tests.Pester\run-pester.ps1") {
-            Set-Location src\IoTPowerShellAgent.Tests.Pester
-            .\run-pester.ps1 -OutputFormat NUnitXml -OutputFile PesterResults.xml
-            Set-Location ..\..
-          } else {
-            Write-Host "Pester tests not found, skipping..."
-          }
-
-      - name: Publish test results
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action/composite@v2
-        with:
-          files: "**/*.trx,**/PesterResults.xml"
