@@ -120,6 +120,15 @@ The same application can operate as:
 
 This allows the execution engine to be tested independently before being deployed as a persistent service.
 
+---
+
+## Diagrams
+
+[1-boundary-a-workflow-relay.visual-check](docs/diagrams/1-boundary-a-workflow-relay.visual-check.html)
+
+
+---
+
 ## Project structure
 
 ```text
