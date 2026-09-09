@@ -1,0 +1,79 @@
+name: Deploy Diagrams (GitHub Pages)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/diagrams/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate index page
+        working-directory: docs/diagrams
+        run: |
+          set -euo pipefail
+
+          primary=()
+          for f in *.html; do
+            [[ "$f" == *.visual-check.html ]] && continue
+            primary+=("$f")
+          done
+
+          {
+            echo "<!doctype html>"
+            echo "<html lang=\"en\"><head><meta charset=\"utf-8\">"
+            echo "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+            echo "<title>IoTPowerShellAgent Diagrams</title>"
+            echo "<style>"
+            echo "body{background:#0b0d12;color:#e6e8ee;font-family:ui-monospace,Consolas,monospace;padding:2rem;max-width:760px;margin:0 auto}"
+            echo "h1{font-size:1.4rem;margin-bottom:1.5rem}"
+            echo "ul{list-style:none;padding:0}"
+            echo "li{margin-bottom:0.75rem;padding:0.75rem 1rem;border:1px solid #2a2e3a;border-radius:8px}"
+            echo "a{color:#7dd3fc;text-decoration:none;font-weight:600}"
+            echo "a:hover{text-decoration:underline}"
+            echo ".sub{display:block;margin-top:0.35rem;font-size:0.85rem;color:#9aa3b2}"
+            echo ".sub a{color:#9aa3b2;font-weight:400}"
+            echo "</style></head><body>"
+            echo "<h1>IoTPowerShellAgent — Diagrams</h1>"
+            echo "<ul>"
+            for f in "${primary[@]}"; do
+              name="${f%.html}"
+              check="${name}.visual-check.html"
+              echo "<li><a href=\"${f}\">${name}</a>"
+              if [[ -f "$check" ]]; then
+                echo "<span class=\"sub\">↳ <a href=\"${check}\">visual-check contact sheet</a></span>"
+              fi
+              echo "</li>"
+            done
+            echo "</ul></body></html>"
+          } > index.html
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/diagrams
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
