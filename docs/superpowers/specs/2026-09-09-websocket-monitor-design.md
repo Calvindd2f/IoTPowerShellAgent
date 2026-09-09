@@ -15,6 +15,10 @@ live activity monitor.
 
 Phase 1 scope: a single agent-hosted page, opt-in, loopback-only by default.
 
+An interactive architecture diagram of this design (frontend/backend split, the
+live-streaming path, and the cancel control path) is available at
+[`docs/diagrams/websocket-activity-monitor.html`](../diagrams/websocket-activity-monitor.html).
+
 ## Reference UI
 
 The visual/interaction target is a Rewst-style workflow activity monitor:
